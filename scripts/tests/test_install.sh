@@ -154,6 +154,34 @@ run_success_case Darwin x86_64 torch-check 0
 run_success_case Darwin arm64 torch-check 0
 run_success_case MINGW64_NT-10.0 x86_64 torch-check.exe 0
 
+no_ulimit_home=$temporary_directory/home-no-ulimit
+mkdir -p "$no_ulimit_home"
+MOCK_UNAME_S=MINGW64_NT-10.0 MOCK_UNAME_M=x86_64 MOCK_FIXTURES=$fixtures \
+    HOME=$no_ulimit_home PATH=$mock_bin:$PATH \
+    sh -c 'ulimit() { return 1; }; installer_path=$1; shift; . "$installer_path"' \
+    sh "$installer" --quiet --version "$release_version"
+no_ulimit_binary=$no_ulimit_home/.local/bin/torch-check.exe
+[ -x "$no_ulimit_binary" ] || fail "installer failed when ulimit -f was unavailable"
+[ "$("$no_ulimit_binary" --version)" = "torch-check $release_version" ] || fail "no-ulimit install reports the wrong version"
+
+unmodifiable_limit_home=$temporary_directory/home-unmodifiable-limit
+mkdir -p "$unmodifiable_limit_home"
+MOCK_UNAME_S=MINGW64_NT-10.0 MOCK_UNAME_M=x86_64 MOCK_FIXTURES=$fixtures \
+    HOME=$unmodifiable_limit_home PATH=$mock_bin:$PATH \
+    sh -c 'ulimit() { if [ "$#" -eq 1 ] && [ "$1" = -f ]; then printf "%s\n" unlimited; else return 1; fi; }; installer_path=$1; shift; . "$installer_path"' \
+    sh "$installer" --quiet --version "$release_version"
+unmodifiable_limit_binary=$unmodifiable_limit_home/.local/bin/torch-check.exe
+[ -x "$unmodifiable_limit_binary" ] || fail "installer failed when ulimit -f could not be changed"
+
+inherited_limit_home=$temporary_directory/home-inherited-limit
+mkdir -p "$inherited_limit_home"
+MOCK_UNAME_S=Linux MOCK_UNAME_M=x86_64 MOCK_FIXTURES=$fixtures \
+    HOME=$inherited_limit_home PATH=$mock_bin:$PATH \
+    sh -c 'ulimit() { if [ "$#" -eq 1 ] && [ "$1" = -f ]; then printf "%s\n" 2048; else return 1; fi; }; installer_path=$1; shift; . "$installer_path"' \
+    sh "$installer" --quiet --version "$release_version"
+inherited_limit_binary=$inherited_limit_home/.local/bin/torch-check
+[ -x "$inherited_limit_binary" ] || fail "installer raised or rejected a stricter inherited file-size limit"
+
 preserved_home=$temporary_directory/home-preserve
 mkdir -p "$preserved_home/.local/bin"
 printf '%s\n' '#!/bin/sh' "printf '%s\\n' 'preserved'" >"$preserved_home/.local/bin/torch-check"

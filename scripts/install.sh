@@ -225,13 +225,33 @@ normalize_version() {
     printf 'v%s\n' "$requested"
 }
 
+apply_optional_file_size_limit() {
+    # MSYS exposes ulimit -f but cannot change the limit. curl's maximum size
+    # and the explicit post-write checks remain mandatory on those shells. A
+    # stricter inherited limit must not be raised by the installer.
+    requested_limit=$1
+    current_limit=$(ulimit -f 2>/dev/null) || return 0
+    case "$current_limit" in
+        unlimited)
+            ulimit -f "$requested_limit" 2>/dev/null || :
+            ;;
+        '' | *[!0-9]*)
+            ;;
+        *)
+            if [ "$current_limit" -gt "$requested_limit" ]; then
+                ulimit -f "$requested_limit" 2>/dev/null || :
+            fi
+            ;;
+    esac
+}
+
 curl_download() {
     source_url=$1
     destination=$2
     maximum_bytes=$3
     maximum_blocks=$((maximum_bytes / 512 + 1))
     (
-        ulimit -f "$maximum_blocks" || exit 1
+        apply_optional_file_size_limit "$maximum_blocks"
         curl --disable \
             --fail \
             --location \
@@ -371,7 +391,7 @@ case "$archive_format" in
             die "$archive_name does not contain exactly one $archive_member"
         fi
         (
-            ulimit -f "$MAX_BINARY_BLOCKS" || exit 1
+            apply_optional_file_size_limit "$MAX_BINARY_BLOCKS"
             tar -xzOf "$archive_path" "$archive_member" >"$extracted_path"
         ) || die "could not safely extract $archive_member"
         ;;
@@ -398,7 +418,7 @@ case "$archive_format" in
         fi
         zip_pattern=$(printf '%s' "$zip_member" | sed 's,\\,\\\\,g')
         (
-            ulimit -f "$MAX_BINARY_BLOCKS" || exit 1
+            apply_optional_file_size_limit "$MAX_BINARY_BLOCKS"
             unzip -p "$archive_path" "$zip_pattern" >"$extracted_path"
         ) || die "could not safely extract $archive_member"
         ;;
