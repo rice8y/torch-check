@@ -24,7 +24,7 @@ The POSIX shell release installer supports Linux, macOS, and Windows under Git B
 curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh
 ```
 
-Pass options after `sh -s --`, for example `curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh -s -- --version 0.1.0` or `curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh -s -- --install-dir "$HOME/bin"`; the equivalent `TORCH_CHECK_VERSION` and `TORCH_CHECK_INSTALL_DIR` environment variables are also supported. Run a downloaded copy with `--help` for the complete interface. Check the final warning and add the selected directory to `PATH` when necessary.
+Pass options after `sh -s --`, for example `curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh -s -- --version 0.1.1` or `curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh -s -- --install-dir "$HOME/bin"`; the equivalent `TORCH_CHECK_VERSION` and `TORCH_CHECK_INSTALL_DIR` environment variables are also supported. Run a downloaded copy with `--help` for the complete interface. Check the final warning and add the selected directory to `PATH` when necessary.
 
 From [crates.io](https://crates.io/crates/torch-check):
 
