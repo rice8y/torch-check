@@ -20,13 +20,13 @@ On musl hosts, resolution fails closed with `unsupported_libc`; the static musl 
 
 From [crates.io](https://crates.io/crates/torch-check):
 
-```console
+```bash
 cargo install torch-check --locked
 ```
 
 From a source checkout:
 
-```console
+```bash
 cargo install --path . --locked
 ```
 
@@ -44,7 +44,7 @@ Every archive contains the binary, shell completions, a man page, project licens
 
 ## Usage
 
-```console
+```bash
 # Alias for `recommend`
 torch-check
 torch-check --installer uv
@@ -78,7 +78,7 @@ Human output adapts to the terminal width, groups identical selected GPUs, and u
 
 Current command forms are:
 
-```console
+```bash
 /path/to/python -m pip install --isolated \
   --index-url https://download.pytorch.org/whl/VARIANT torch==VERSION
 
@@ -164,7 +164,7 @@ Static recommendations never receive the `verified` state.
 
 ## Development
 
-```console
+```bash
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo test --workspace --all-features --locked
