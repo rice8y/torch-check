@@ -1,0 +1,51 @@
+---
+source: tests/cli_contract.rs
+assertion_line: 41
+expression: stdout
+---
+Inspect a Python/NVIDIA environment, enumerate wheels that actually exist on the official PyTorch
+indexes, and recommend only reviewed configurations whose driver, ABI, platform, and GPU
+compatibility can be established statically.
+
+Usage: torch-check [OPTIONS] [COMMAND]
+
+Commands:
+  inspect      Display detected OS, Python, NVIDIA, GPU, glibc, and Toolkit details
+  recommend    Select the highest-ranked reviewed, statically compatible configuration
+  candidates   List candidates by review and compatibility stage
+  explain      Explain every check for one exact PyTorch/CUDA pair
+  verify       Import installed PyTorch and execute bounded runtime checks
+  completions  Generate a shell completion script
+  man          Generate the roff man page on stdout
+  help         Print this message or the help of the given subcommand(s)
+
+Options:
+      --python <PATH>
+          Python interpreter to inspect, verify, and use in generated commands
+
+      --gpu <INDEX>
+          Physical nvidia-smi GPU indices to consider (comma-separated). Empty means every device
+
+      --format <FORMAT>
+          Human-readable or stable machine-readable output
+          
+          [default: human]
+          [possible values: human, json]
+
+      --refresh
+          Bypass a fresh wheel-index cache
+
+      --offline
+          Never access the network; require a complete cached index
+
+      --cache-dir <PATH>
+          Override the platform cache directory
+
+      --redact
+          Remove GPU UUIDs and local interpreter paths from output
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version

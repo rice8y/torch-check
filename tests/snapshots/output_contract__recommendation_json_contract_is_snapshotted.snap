@@ -1,0 +1,133 @@
+---
+source: tests/output_contract.rs
+assertion_line: 206
+expression: report
+---
+{
+  "schema_version": 1,
+  "environment": {
+    "os": "linux",
+    "architecture": "x86_64",
+    "kernel_version": "6.8.0",
+    "distribution": "Fixture Linux",
+    "glibc": "2.28",
+    "python": {
+      "executable": "/opt/fixture/bin/python",
+      "implementation": "cpython",
+      "version": "3.12.8",
+      "soabi": "cpython-312-x86_64-linux-gnu",
+      "cache_tag": "cpython-312",
+      "platform": "linux-x86_64",
+      "pointer_width": 64,
+      "free_threaded": false,
+      "virtual_environment": "/opt/fixture",
+      "compatible_tags": [
+        "cp312-cp312-manylinux_2_28_x86_64",
+        "py3-none-any"
+      ],
+      "tag_source": "packaging"
+    },
+    "nvidia": {
+      "status": "no_devices",
+      "driver_version": null,
+      "reported_cuda_version": null,
+      "gpus": []
+    },
+    "cuda_toolkit": null,
+    "diagnostics": []
+  },
+  "metadata": {
+    "origin": "fresh_cache",
+    "fetched_at": 1750000000,
+    "age_seconds": 30,
+    "stale": false,
+    "source": "https://download.pytorch.org/whl/"
+  },
+  "recommendation": {
+    "torch_version": "2.6.0",
+    "variant": "cpu",
+    "compatibility": "direct-compatible",
+    "checks": {
+      "wheel": {
+        "status": "pass",
+        "reasons": [
+          {
+            "code": "wheel_exists",
+            "details": {}
+          }
+        ]
+      },
+      "python": {
+        "status": "pass",
+        "reasons": [
+          {
+            "code": "python_tag_matches",
+            "details": {}
+          }
+        ]
+      },
+      "platform": {
+        "status": "pass",
+        "reasons": [
+          {
+            "code": "platform_tag_matches",
+            "details": {}
+          }
+        ]
+      },
+      "gpu_architecture": {
+        "status": "not_applicable",
+        "reasons": [
+          {
+            "code": "gpu_architecture_supported",
+            "details": {}
+          }
+        ]
+      },
+      "driver": {
+        "status": "not_applicable",
+        "reasons": [
+          {
+            "code": "driver_not_required",
+            "details": {}
+          }
+        ]
+      },
+      "runtime": {
+        "status": "unknown",
+        "reasons": [
+          {
+            "code": "runtime_not_run",
+            "details": {}
+          }
+        ]
+      }
+    },
+    "wheel": {
+      "package": "torch",
+      "filename": "torch-2.6.0-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "version": "2.6.0",
+      "public_version": "2.6.0",
+      "variant": "cpu",
+      "python_tags": [
+        "cp312"
+      ],
+      "abi_tags": [
+        "cp312"
+      ],
+      "platform_tags": [
+        "manylinux_2_28_x86_64"
+      ],
+      "url": "https://download.pytorch.org/whl/cpu/torch-2.6.0-cp312-cp312-manylinux_2_28_x86_64.whl#sha256=0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "yanked": false,
+      "requires_python": ">=3.9"
+    },
+    "stable": true,
+    "official_preference": 0,
+    "warnings": []
+  },
+  "alternatives": [],
+  "excluded": [],
+  "install": null
+}
