@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-07-14",
+  "sources": [
+    "https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html",
+    "https://docs.nvidia.com/cuda/archive/13.2.0/cuda-toolkit-release-notes/index.html#cuda-driver"
+  ],
+  "families": [
+    {
+      "cuda_major": 11,
+      "linux_min_driver": "450.80.02",
+      "compatibility": "minor-version"
+    },
+    {
+      "cuda_major": 12,
+      "linux_min_driver": "525.60.13",
+      "compatibility": "minor-version"
+    },
+    {
+      "cuda_major": 13,
+      "linux_min_driver": "580.65.06",
+      "compatibility": "minor-version"
+    }
+  ],
+  "variants": [
+    { "variant": "cu110", "linux_min_driver": "450.36.06" },
+    { "variant": "cu111", "linux_min_driver": "455.23" },
+    { "variant": "cu113", "linux_min_driver": "465.19.01" },
+    { "variant": "cu115", "linux_min_driver": "495.29.05" },
+    { "variant": "cu116", "linux_min_driver": "510.39.01" },
+    { "variant": "cu117", "linux_min_driver": "515.43.04" },
+    { "variant": "cu118", "linux_min_driver": "520.61.05" },
+    { "variant": "cu120", "linux_min_driver": "525.60.13" },
+    { "variant": "cu121", "linux_min_driver": "530.30.02" },
+    { "variant": "cu122", "linux_min_driver": "535.54.03" },
+    { "variant": "cu123", "linux_min_driver": "545.23.06" },
+    { "variant": "cu124", "linux_min_driver": "550.54.14" },
+    { "variant": "cu125", "linux_min_driver": "555.42.02" },
+    { "variant": "cu126", "linux_min_driver": "560.28.03" },
+    { "variant": "cu128", "linux_min_driver": "570.26" },
+    { "variant": "cu129", "linux_min_driver": "575.51.03" },
+    { "variant": "cu130", "linux_min_driver": "580.65.06" },
+    { "variant": "cu131", "linux_min_driver": "590.44.01" },
+    { "variant": "cu132", "linux_min_driver": "595.45.04" }
+  ]
+}

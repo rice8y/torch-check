@@ -1,0 +1,672 @@
+{
+  "schema_version": 3,
+  "reviewed_at": "2026-07-15",
+  "sources": [
+    "https://github.com/pytorch/pytorch/blob/main/RELEASE.md",
+    "https://pytorch.org/get-started/previous-versions/",
+    "https://github.com/pytorch/pytorch/blob/v2.6.0/.ci/manywheel/build_cuda.sh",
+    "https://github.com/pytorch/pytorch/blob/v2.7.0/.ci/manywheel/build_cuda.sh",
+    "https://github.com/pytorch/pytorch/blob/v2.7.1/.ci/manywheel/build_cuda.sh",
+    "https://github.com/pytorch/pytorch/blob/v2.8.0/.ci/manywheel/build_cuda.sh",
+    "https://github.com/pytorch/pytorch/blob/v2.9.0/.ci/manywheel/build_cuda.sh",
+    "https://github.com/pytorch/pytorch/blob/v2.9.1/.ci/manywheel/build_cuda.sh",
+    "https://github.com/pytorch/pytorch/blob/v2.10.0/.ci/manywheel/build_cuda.sh",
+    "https://github.com/pytorch/pytorch/blob/v2.11.0/.ci/manywheel/build_cuda.sh"
+  ],
+  "releases": [
+    {
+      "series": "2.13",
+      "preferred_variant": "cu130",
+      "variants": [
+        "cu126",
+        "cu130",
+        "cu132",
+        "cpu"
+      ],
+      "torchvision_minor": 28,
+      "torchaudio_series": null
+    },
+    {
+      "series": "2.12",
+      "preferred_variant": "cu130",
+      "variants": [
+        "cu126",
+        "cu130",
+        "cu132",
+        "cpu"
+      ],
+      "torchvision_minor": 27,
+      "torchaudio_series": null
+    },
+    {
+      "series": "2.11",
+      "preferred_variant": "cu128",
+      "variants": [
+        "cu126",
+        "cu128",
+        "cu130",
+        "cpu"
+      ],
+      "torchvision_minor": 26,
+      "torchaudio_series": "2.11"
+    },
+    {
+      "series": "2.10",
+      "preferred_variant": "cu128",
+      "variants": [
+        "cu126",
+        "cu128",
+        "cu130",
+        "cpu"
+      ],
+      "torchvision_minor": 25,
+      "torchaudio_series": "2.10"
+    },
+    {
+      "series": "2.9",
+      "preferred_variant": "cu128",
+      "variants": [
+        "cu126",
+        "cu128",
+        "cu130",
+        "cpu"
+      ],
+      "torchvision_minor": 24,
+      "torchaudio_series": "2.9"
+    },
+    {
+      "series": "2.8",
+      "preferred_variant": "cu128",
+      "variants": [
+        "cu126",
+        "cu128",
+        "cu129",
+        "cpu"
+      ],
+      "torchvision_minor": 23,
+      "torchaudio_series": "2.8"
+    },
+    {
+      "series": "2.7",
+      "preferred_variant": "cu126",
+      "variants": [
+        "cu118",
+        "cu126",
+        "cu128",
+        "cpu"
+      ],
+      "torchvision_minor": 22,
+      "torchaudio_series": "2.7"
+    },
+    {
+      "series": "2.6",
+      "preferred_variant": "cu124",
+      "variants": [
+        "cu118",
+        "cu124",
+        "cu126",
+        "cpu"
+      ],
+      "torchvision_minor": 21,
+      "torchaudio_series": "2.6"
+    },
+    {
+      "series": "2.5",
+      "preferred_variant": "cu124",
+      "variants": [
+        "cu118",
+        "cu121",
+        "cu124",
+        "cpu"
+      ],
+      "torchvision_minor": 20,
+      "torchaudio_series": "2.5"
+    },
+    {
+      "series": "2.4",
+      "preferred_variant": "cu121",
+      "variants": [
+        "cu118",
+        "cu121",
+        "cu124",
+        "cpu"
+      ],
+      "torchvision_minor": 19,
+      "torchaudio_series": "2.4"
+    },
+    {
+      "series": "2.3",
+      "preferred_variant": "cu118",
+      "variants": [
+        "cu118",
+        "cu121",
+        "cpu"
+      ],
+      "torchvision_minor": 18,
+      "torchaudio_series": "2.3"
+    },
+    {
+      "series": "2.2",
+      "preferred_variant": "cu118",
+      "variants": [
+        "cu118",
+        "cu121",
+        "cpu"
+      ],
+      "torchvision_minor": 17,
+      "torchaudio_series": "2.2"
+    },
+    {
+      "series": "2.1",
+      "preferred_variant": "cu118",
+      "variants": [
+        "cu118",
+        "cu121",
+        "cpu"
+      ],
+      "torchvision_minor": 16,
+      "torchaudio_series": "2.1"
+    },
+    {
+      "series": "2.0",
+      "preferred_variant": "cu117",
+      "variants": [
+        "cu117",
+        "cu118",
+        "cpu"
+      ],
+      "torchvision_minor": 15,
+      "torchaudio_series": "2.0"
+    }
+  ],
+  "gpu_architectures": [
+    {
+      "series": "2.13",
+      "versions": [
+        "2.13.0"
+      ],
+      "variants": [
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.13",
+      "versions": [
+        "2.13.0"
+      ],
+      "variants": [
+        "cu130",
+        "cu132"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.12",
+      "versions": [
+        "2.12.0",
+        "2.12.1"
+      ],
+      "variants": [
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.12",
+      "versions": [
+        "2.12.0",
+        "2.12.1"
+      ],
+      "variants": [
+        "cu130",
+        "cu132"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.11",
+      "versions": [
+        "2.11.0"
+      ],
+      "variants": [
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.11",
+      "versions": [
+        "2.11.0"
+      ],
+      "variants": [
+        "cu128"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.11",
+      "versions": [
+        "2.11.0"
+      ],
+      "variants": [
+        "cu129"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.11",
+      "versions": [
+        "2.11.0"
+      ],
+      "variants": [
+        "cu130"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.10",
+      "versions": [
+        "2.10.0"
+      ],
+      "variants": [
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.10",
+      "versions": [
+        "2.10.0"
+      ],
+      "variants": [
+        "cu128"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.10",
+      "versions": [
+        "2.10.0"
+      ],
+      "variants": [
+        "cu129"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.10",
+      "versions": [
+        "2.10.0"
+      ],
+      "variants": [
+        "cu130"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.9",
+      "versions": [
+        "2.9.0",
+        "2.9.1"
+      ],
+      "variants": [
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.9",
+      "versions": [
+        "2.9.0",
+        "2.9.1"
+      ],
+      "variants": [
+        "cu128"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.9",
+      "versions": [
+        "2.9.0",
+        "2.9.1"
+      ],
+      "variants": [
+        "cu129"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.9",
+      "versions": [
+        "2.9.0",
+        "2.9.1"
+      ],
+      "variants": [
+        "cu130"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.8",
+      "versions": [
+        "2.8.0"
+      ],
+      "variants": [
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.8",
+      "versions": [
+        "2.8.0"
+      ],
+      "variants": [
+        "cu128"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.8",
+      "versions": [
+        "2.8.0"
+      ],
+      "variants": [
+        "cu129"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.7",
+      "versions": [
+        "2.7.0",
+        "2.7.1"
+      ],
+      "variants": [
+        "cu118"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "3.7",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.7",
+      "versions": [
+        "2.7.0",
+        "2.7.1"
+      ],
+      "variants": [
+        "cu124",
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.7",
+      "versions": [
+        "2.7.0",
+        "2.7.1"
+      ],
+      "variants": [
+        "cu128"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
+    {
+      "series": "2.6",
+      "versions": [
+        "2.6.0"
+      ],
+      "variants": [
+        "cu118"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "3.7",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.6",
+      "versions": [
+        "2.6.0"
+      ],
+      "variants": [
+        "cu121",
+        "cu124",
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    }
+  ]
+}

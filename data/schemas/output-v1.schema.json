@@ -1,0 +1,433 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:torch-check:schema:output:v1",
+  "title": "torch-check output schema v1",
+  "oneOf": [
+    { "$ref": "#/$defs/inspect" },
+    { "$ref": "#/$defs/recommendation" },
+    { "$ref": "#/$defs/candidates" },
+    { "$ref": "#/$defs/explain" },
+    { "$ref": "#/$defs/verification" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+(?:\\.[0-9]+)*$"
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "details"],
+      "properties": {
+        "code": { "type": "string" },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "details": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "python": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "implementation",
+        "version",
+        "soabi",
+        "cache_tag",
+        "platform",
+        "pointer_width",
+        "free_threaded",
+        "virtual_environment",
+        "compatible_tags",
+        "tag_source"
+      ],
+      "properties": {
+        "executable": { "type": "string" },
+        "implementation": { "type": "string" },
+        "version": { "$ref": "#/$defs/version" },
+        "soabi": { "type": ["string", "null"] },
+        "cache_tag": { "type": ["string", "null"] },
+        "platform": { "type": "string" },
+        "pointer_width": { "type": "integer", "minimum": 1 },
+        "free_threaded": { "type": "boolean" },
+        "virtual_environment": { "type": ["string", "null"] },
+        "compatible_tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "tag_source": { "enum": ["packaging", "builtin"] }
+      }
+    },
+    "gpu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "uuid", "name", "compute_capability", "driver_version"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "uuid": { "type": ["string", "null"] },
+        "name": { "type": "string" },
+        "compute_capability": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["major", "minor"],
+              "properties": {
+                "major": { "type": "integer", "minimum": 0 },
+                "minor": { "type": "integer", "minimum": 0 }
+              }
+            }
+          ]
+        },
+        "driver_version": { "$ref": "#/$defs/version" }
+      }
+    },
+    "nvidia": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "driver_version", "reported_cuda_version", "gpus"],
+      "properties": {
+        "status": {
+          "enum": ["detected", "command_unavailable", "no_devices", "failed", "timed_out"]
+        },
+        "driver_version": {
+          "oneOf": [{ "$ref": "#/$defs/version" }, { "type": "null" }]
+        },
+        "reported_cuda_version": {
+          "oneOf": [{ "$ref": "#/$defs/version" }, { "type": "null" }]
+        },
+        "gpus": { "type": "array", "items": { "$ref": "#/$defs/gpu" } }
+      }
+    },
+    "toolkit": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "root", "source"],
+          "properties": {
+            "version": { "$ref": "#/$defs/version" },
+            "root": { "type": ["string", "null"] },
+            "source": { "enum": ["cuda_home", "cuda_path", "nvcc", "version_json"] }
+          }
+        }
+      ]
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "architecture",
+        "kernel_version",
+        "distribution",
+        "glibc",
+        "python",
+        "nvidia",
+        "cuda_toolkit",
+        "diagnostics"
+      ],
+      "properties": {
+        "os": { "type": "string" },
+        "architecture": { "type": "string" },
+        "kernel_version": { "type": ["string", "null"] },
+        "distribution": { "type": ["string", "null"] },
+        "glibc": {
+          "oneOf": [{ "$ref": "#/$defs/version" }, { "type": "null" }]
+        },
+        "python": {
+          "oneOf": [{ "$ref": "#/$defs/python" }, { "type": "null" }]
+        },
+        "nvidia": { "$ref": "#/$defs/nvidia" },
+        "cuda_toolkit": { "$ref": "#/$defs/toolkit" },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagnostic" }
+        }
+      }
+    },
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "details"],
+      "properties": {
+        "code": { "type": "string" },
+        "details": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": { "enum": ["pass", "fail", "unknown", "not_applicable"] },
+        "reasons": { "type": "array", "items": { "$ref": "#/$defs/reason" } }
+      }
+    },
+    "wheel": {
+      "type": "object",
+      "required": [
+        "package",
+        "filename",
+        "version",
+        "public_version",
+        "variant",
+        "python_tags",
+        "abi_tags",
+        "platform_tags",
+        "url",
+        "sha256",
+        "yanked",
+        "requires_python"
+      ],
+      "properties": {
+        "package": { "type": "string" },
+        "filename": { "type": "string" },
+        "version": { "type": "string" },
+        "public_version": { "type": "string" },
+        "variant": { "type": "string" },
+        "python_tags": { "type": "array", "items": { "type": "string" } },
+        "abi_tags": { "type": "array", "items": { "type": "string" } },
+        "platform_tags": { "type": "array", "items": { "type": "string" } },
+        "url": { "type": "string", "format": "uri" },
+        "sha256": { "type": ["string", "null"] },
+        "yanked": { "type": "boolean" },
+        "requires_python": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "torch_version",
+        "variant",
+        "compatibility",
+        "checks",
+        "wheel",
+        "stable",
+        "official_preference",
+        "warnings"
+      ],
+      "properties": {
+        "torch_version": { "type": "string" },
+        "variant": { "type": "string" },
+        "compatibility": {
+          "enum": [
+            "verified",
+            "direct-compatible",
+            "minor-compatible",
+            "unverified",
+            "incompatible",
+            "unavailable"
+          ]
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["wheel", "python", "platform", "gpu_architecture", "driver", "runtime"],
+          "properties": {
+            "wheel": { "$ref": "#/$defs/check" },
+            "python": { "$ref": "#/$defs/check" },
+            "platform": { "$ref": "#/$defs/check" },
+            "gpu_architecture": { "$ref": "#/$defs/check" },
+            "driver": { "$ref": "#/$defs/check" },
+            "runtime": { "$ref": "#/$defs/check" }
+          }
+        },
+        "wheel": { "oneOf": [{ "$ref": "#/$defs/wheel" }, { "type": "null" }] },
+        "stable": { "type": "boolean" },
+        "official_preference": { "type": ["integer", "null"], "minimum": 0 },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/reason" } }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "fetched_at", "age_seconds", "stale", "source"],
+      "properties": {
+        "origin": { "enum": ["network", "fresh_cache", "offline_cache", "stale_if_error"] },
+        "fetched_at": { "type": "integer", "minimum": 0 },
+        "age_seconds": { "type": "integer", "minimum": 0 },
+        "stale": { "type": "boolean" },
+        "source": { "type": "string", "format": "uri" }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["program", "args", "display"],
+      "properties": {
+        "program": { "type": "string" },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "display": { "type": "string" }
+      }
+    },
+    "inspect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "environment"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "environment": { "$ref": "#/$defs/environment" }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "environment",
+        "metadata",
+        "recommendation",
+        "alternatives",
+        "excluded",
+        "install"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "environment": { "$ref": "#/$defs/environment" },
+        "metadata": { "$ref": "#/$defs/metadata" },
+        "recommendation": {
+          "oneOf": [{ "$ref": "#/$defs/candidate" }, { "type": "null" }]
+        },
+        "alternatives": { "type": "array", "items": { "$ref": "#/$defs/candidate" } },
+        "excluded": { "type": "array", "items": { "$ref": "#/$defs/candidate" } },
+        "install": { "oneOf": [{ "$ref": "#/$defs/command" }, { "type": "null" }] }
+      }
+    },
+    "candidates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "environment", "metadata", "candidates"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "environment": { "$ref": "#/$defs/environment" },
+        "metadata": { "$ref": "#/$defs/metadata" },
+        "candidates": { "type": "array", "items": { "$ref": "#/$defs/candidate" } }
+      }
+    },
+    "explain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "environment", "metadata", "candidate"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "environment": { "$ref": "#/$defs/environment" },
+        "metadata": { "$ref": "#/$defs/metadata" },
+        "candidate": { "$ref": "#/$defs/candidate" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "python_executable",
+        "status",
+        "torch_version",
+        "compiled_cuda",
+        "cuda_available",
+        "device_count",
+        "arch_list",
+        "devices",
+        "gpu_selection",
+        "cudnn_available",
+        "checks",
+        "diagnostics",
+        "error"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "python_executable": { "type": "string" },
+        "status": { "enum": ["verified", "incompatible"] },
+        "torch_version": { "type": ["string", "null"] },
+        "compiled_cuda": { "type": ["string", "null"] },
+        "cuda_available": { "type": ["boolean", "null"] },
+        "device_count": { "type": ["integer", "null"], "minimum": 0 },
+        "arch_list": { "type": "array", "items": { "type": "string" } },
+        "devices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["index", "name", "capability", "operations_ok"],
+            "properties": {
+              "index": { "type": "integer", "minimum": 0 },
+              "name": { "type": "string" },
+              "capability": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["major", "minor"],
+                "properties": {
+                  "major": { "type": "integer", "minimum": 0 },
+                  "minor": { "type": "integer", "minimum": 0 }
+                }
+              },
+              "operations_ok": { "type": "boolean" }
+            }
+          }
+        },
+        "gpu_selection": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["physical_index", "logical_index", "uuid"],
+            "properties": {
+              "physical_index": { "type": "integer", "minimum": 0 },
+              "logical_index": { "type": "integer", "minimum": 0 },
+              "uuid": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "cudnn_available": { "type": ["boolean", "null"] },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "passed", "detail"],
+            "properties": {
+              "name": { "type": "string" },
+              "passed": { "type": "boolean" },
+              "detail": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagnostic" }
+        },
+        "error": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "error"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "code", "message"],
+          "properties": {
+            "kind": { "enum": ["usage", "detection", "metadata", "resolution", "verification", "internal"] },
+            "code": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
