@@ -297,19 +297,7 @@ enum RunnerFailure {
 }
 
 fn run_probe(options: &VerifyOptions, selected_json: &str) -> Result<ProbeOutput, RunnerFailure> {
-    let mut command = Command::new(&options.python_executable);
-    command
-        .arg("-I")
-        .arg("-c")
-        .arg(PROBE_SCRIPT)
-        .arg(selected_json)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    if let Some(visible_devices) = &options.cuda_visible_devices {
-        command.env("CUDA_VISIBLE_DEVICES", visible_devices);
-    }
-    isolate_process_tree(&mut command);
+    let mut command = probe_command(options, selected_json);
 
     let mut child = command
         .spawn()
@@ -359,6 +347,23 @@ fn run_probe(options: &VerifyOptions, selected_json: &str) -> Result<ProbeOutput
         stdout,
         stderr,
     })
+}
+
+fn probe_command(options: &VerifyOptions, selected_json: &str) -> Command {
+    let mut command = Command::new(&options.python_executable);
+    command
+        .arg("-I")
+        .arg("-c")
+        .arg(PROBE_SCRIPT)
+        .arg(selected_json)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(visible_devices) = &options.cuda_visible_devices {
+        command.env("CUDA_VISIBLE_DEVICES", visible_devices);
+    }
+    isolate_process_tree(&mut command);
+    command
 }
 
 fn wait_for_child(
@@ -1189,7 +1194,26 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn subprocess_uses_isolated_mode_and_parses_success() {
+    fn probe_command_uses_isolated_mode_and_protocol_arguments() {
+        use std::ffi::OsStr;
+
+        let command = probe_command(&options(), "[0,1]");
+        let arguments = command.get_args().collect::<Vec<_>>();
+
+        assert_eq!(
+            arguments,
+            [
+                OsStr::new("-I"),
+                OsStr::new("-c"),
+                OsStr::new(PROBE_SCRIPT),
+                OsStr::new("[0,1]"),
+            ]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn subprocess_parses_successful_probe() {
         let line = protocol_line(json!({
             "protocol_version": 1,
             "ok": true,
@@ -1204,17 +1228,19 @@ mod tests {
             "cudnn_enabled": true,
             "cudnn_version": null
         }));
-        let body = format!(
-            "[ \"$1\" = \"-I\" ] || exit 91\n[ \"$2\" = \"-c\" ] || exit 92\nprintf '%s\\n' {}",
-            shell_single_quote(&line)
-        );
+        let body = format!("printf '%s\\n' {}", shell_single_quote(&line));
         let (_directory, executable) = fake_python(&body);
         let mut options = options();
         options.python_executable = executable;
 
         let report = verify_installed(&options);
 
-        assert_eq!(report.status, CompatibilityStatus::Verified);
+        assert_eq!(
+            report.status,
+            CompatibilityStatus::Verified,
+            "verification failed: {:?}",
+            report.error
+        );
         assert_eq!(report.torch_version.as_deref(), Some("2.9.1+cpu"));
     }
 
