@@ -1378,10 +1378,17 @@ fn write_cache(cache_dir: &Path, path: &Path, snapshot: &IndexSnapshot) -> Resul
             path: path.to_path_buf(),
             source: error.error,
         })?;
-    File::open(cache_dir)
+    #[cfg(unix)]
+    sync_cache_directory(cache_dir)?;
+    Ok(())
+}
+
+#[cfg(unix)]
+fn sync_cache_directory(path: &Path) -> Result<(), IndexError> {
+    File::open(path)
         .and_then(|directory| directory.sync_all())
         .map_err(|source| IndexError::CacheIo {
-            path: cache_dir.to_path_buf(),
+            path: path.to_path_buf(),
             source,
         })?;
     Ok(())
