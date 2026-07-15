@@ -1,10 +1,10 @@
 //! Command-line parsing, rendering, redaction, and exit-code handling.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fmt::Write as FmtWrite;
 use std::io::{self, IsTerminal, Write as IoWrite};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode as ProcessExitCode;
 use std::str::FromStr;
 
@@ -425,10 +425,10 @@ fn verification_gpu_selection(
     cli: &Cli,
     environment: &Environment,
 ) -> Result<VerificationGpuSelection, String> {
-    if cli.gpu.is_empty() {
-        return Ok(VerificationGpuSelection::default());
-    }
     if environment.nvidia.gpus.is_empty() {
+        if cli.gpu.is_empty() {
+            return Ok(VerificationGpuSelection::default());
+        }
         return Err("no selected physical NVIDIA GPU was detected".to_owned());
     }
 
@@ -475,8 +475,9 @@ fn valid_gpu_uuid(value: &str) -> bool {
 }
 
 async fn command_recommend(cli: &Cli, args: &RecommendArgs) -> ExitCode {
-    let environment = match detect(cli) {
-        Ok(environment) => environment,
+    let installer = Installer::from(args.installer);
+    let (environment, pin_python_in_install_command) = match detect_for_installer(cli, installer) {
+        Ok(result) => result,
         Err(error) => {
             return emit_error(
                 cli.format,
@@ -498,8 +499,8 @@ async fn command_recommend(cli: &Cli, args: &RecommendArgs) -> ExitCode {
     let options = ResolverOptions {
         torch_version: args.torch_version.clone(),
         include_prerelease: args.prerelease,
-        installer: args.installer.into(),
-        pin_python_in_install_command: cli.python.is_some(),
+        installer,
+        pin_python_in_install_command,
         companions,
     };
     let mut report = match resolve(&environment, &loaded.snapshot, loaded.metadata, &options) {
@@ -554,7 +555,7 @@ async fn command_candidates(cli: &Cli, args: &CandidatesArgs) -> ExitCode {
         torch_version: args.torch_version.clone(),
         include_prerelease: args.prerelease,
         installer: Installer::Pip,
-        pin_python_in_install_command: cli.python.is_some(),
+        pin_python_in_install_command: true,
         companions,
     };
     let report = match resolve(&environment, &loaded.snapshot, loaded.metadata, &options) {
@@ -692,6 +693,95 @@ fn detect(cli: &Cli) -> Result<Environment, crate::detect::DetectError> {
         python: cli.python.clone(),
         gpu_indices: cli.gpu.clone(),
         ..DetectOptions::default()
+    })
+}
+
+fn detect_for_installer(
+    cli: &Cli,
+    installer: Installer,
+) -> Result<(Environment, bool), crate::detect::DetectError> {
+    if cli.python.is_some() || installer != Installer::Uv {
+        return detect(cli).map(|environment| (environment, true));
+    }
+
+    let Some(python) = uv_pip_environment_python() else {
+        return detect(cli).map(|environment| (environment, true));
+    };
+    let environment = detect_environment(&DetectOptions {
+        python: Some(python),
+        gpu_indices: cli.gpu.clone(),
+        ..DetectOptions::default()
+    })?;
+    Ok((environment, false))
+}
+
+fn uv_pip_environment_python() -> Option<PathBuf> {
+    let overridden = environment_flag_is_set("UV_SYSTEM_PYTHON")
+        || std::env::var_os("UV_PYTHON").is_some_and(|value| !value.is_empty());
+    let current = std::env::current_dir().ok()?;
+    find_uv_pip_environment_python(
+        &current,
+        std::env::var_os("VIRTUAL_ENV").as_deref(),
+        std::env::var_os("CONDA_PREFIX").as_deref(),
+        overridden,
+    )
+}
+
+fn find_uv_pip_environment_python(
+    current: &Path,
+    virtual_environment: Option<&OsStr>,
+    conda_prefix: Option<&OsStr>,
+    overridden: bool,
+) -> Option<PathBuf> {
+    if overridden {
+        return None;
+    }
+    if let Some(root) = virtual_environment
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+        .filter(|root| root.join("pyvenv.cfg").is_file())
+    {
+        return environment_python(&root);
+    }
+    if let Some(root) = conda_prefix
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+        .filter(|root| root.join("conda-meta").is_dir())
+    {
+        return environment_python(&root);
+    }
+
+    current.ancestors().find_map(|directory| {
+        let root = directory.join(".venv");
+        root.join("pyvenv.cfg")
+            .is_file()
+            .then(|| environment_python(&root))
+            .flatten()
+    })
+}
+
+fn environment_python(root: &Path) -> Option<PathBuf> {
+    let candidates = if cfg!(windows) {
+        [
+            root.join("Scripts").join("python.exe"),
+            root.join("python.exe"),
+        ]
+    } else {
+        [
+            root.join("bin").join("python"),
+            root.join("bin").join("python3"),
+        ]
+    };
+    candidates.into_iter().find(|candidate| candidate.is_file())
+}
+
+fn environment_flag_is_set(name: &str) -> bool {
+    std::env::var(name).is_ok_and(|value| {
+        !value.is_empty()
+            && !matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "0" | "false" | "no" | "off"
+            )
     })
 }
 
@@ -1896,7 +1986,7 @@ fn warning_text(warning: &CandidateWarning) -> String {
             "NVIDIA detection was incomplete, so CUDA compatibility is uncertain."
         }
         WarningCode::BuiltinPythonTags => {
-            "Python wheel tags were generated by the conservative built-in fallback."
+            "Python wheel tags were generated by the dependency-free built-in implementation."
         }
         WarningCode::OfficialPreferenceUnknown => {
             "No reviewed PyTorch release preference is available for this configuration."
@@ -2045,7 +2135,9 @@ fn diagnostic_text(diagnostic: &Diagnostic) -> String {
         DiagnosticCode::UnsupportedPythonImplementation => {
             "The selected Python implementation is unsupported."
         }
-        DiagnosticCode::BuiltinPythonTags => "Python tags use the conservative built-in fallback.",
+        DiagnosticCode::BuiltinPythonTags => {
+            "Python tags use the dependency-free built-in implementation."
+        }
         DiagnosticCode::NvidiaSmiUnavailable => "nvidia-smi was not found.",
         DiagnosticCode::NvidiaNoDevices => "NVIDIA reported no visible devices.",
         DiagnosticCode::NvidiaInspectionFailed => "NVIDIA inspection failed.",
@@ -2372,7 +2464,7 @@ mod tests {
                 free_threaded: false,
                 virtual_environment: None,
                 compatible_tags: vec!["cp310-cp310-manylinux_2_28_x86_64".to_owned()],
-                tag_source: crate::core::TagSource::Packaging,
+                tag_source: crate::core::TagSource::Builtin,
             }),
             nvidia: crate::core::NvidiaInfo {
                 status: NvidiaDetectionStatus::Detected,
@@ -2540,6 +2632,65 @@ mod tests {
     }
 
     #[test]
+    fn uv_pip_environment_discovery_matches_uv_precedence() {
+        let directory = tempfile::tempdir().expect("temporary directory");
+        let project = directory.path().join("project");
+        let nested = project.join("src");
+        let project_environment = project.join(".venv");
+        let active_environment = directory.path().join("active");
+        std::fs::create_dir_all(&nested).expect("nested project directory");
+        for root in [&project_environment, &active_environment] {
+            let bin = if cfg!(windows) {
+                root.join("Scripts")
+            } else {
+                root.join("bin")
+            };
+            std::fs::create_dir_all(&bin).expect("environment bin directory");
+            std::fs::write(root.join("pyvenv.cfg"), "home = /usr/bin\n")
+                .expect("environment marker");
+            std::fs::write(
+                bin.join(if cfg!(windows) {
+                    "python.exe"
+                } else {
+                    "python"
+                }),
+                "",
+            )
+            .expect("environment Python");
+        }
+        let python = |root: &Path| {
+            if cfg!(windows) {
+                root.join("Scripts").join("python.exe")
+            } else {
+                root.join("bin").join("python")
+            }
+        };
+
+        assert_eq!(
+            find_uv_pip_environment_python(&nested, None, None, false),
+            Some(python(&project_environment))
+        );
+        assert_eq!(
+            find_uv_pip_environment_python(
+                &nested,
+                Some(active_environment.as_os_str()),
+                None,
+                false,
+            ),
+            Some(python(&active_environment))
+        );
+        assert_eq!(
+            find_uv_pip_environment_python(
+                &nested,
+                Some(active_environment.as_os_str()),
+                None,
+                true,
+            ),
+            None
+        );
+    }
+
+    #[test]
     fn exact_requirement_parser_rejects_ranges() {
         assert!(exact_torch_version("torch>=2.10").is_err());
         assert!(exact_torch_version("torch==2.10,!=2.10.1").is_err());
@@ -2703,7 +2854,7 @@ mod tests {
     }
 
     #[test]
-    fn explicit_gpu_verification_uses_full_uuids_and_zero_based_logical_indices() {
+    fn gpu_verification_uses_full_uuids_and_zero_based_logical_indices() {
         let cli =
             Cli::try_parse_from(["torch-check", "--gpu", "2,0", "verify"]).expect("valid CLI");
         let mut environment = crate::core::Environment {
@@ -2745,6 +2896,16 @@ mod tests {
         assert_eq!(selection.mappings[0].logical_index, 0);
         assert_eq!(selection.mappings[1].physical_index, 2);
         assert_eq!(selection.mappings[1].logical_index, 1);
+
+        let default_cli =
+            Cli::try_parse_from(["torch-check", "verify"]).expect("valid default CLI");
+        let default_selection =
+            verification_gpu_selection(&default_cli, &environment).expect("safe default selection");
+        assert_eq!(default_selection.device_indices, Some(vec![0, 1]));
+        assert_eq!(
+            default_selection.cuda_visible_devices.as_deref(),
+            Some("GPU-aaaaaaaa,GPU-bbbbbbbb")
+        );
     }
 
     #[test]

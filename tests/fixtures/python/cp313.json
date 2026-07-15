@@ -1,1 +1,1 @@
-{"implementation":"CPython","version":[3,13,5],"soabi":"cpython-313-x86_64-linux-gnu","cache_tag":"cpython-313","platform":"linux-x86_64","pointer_width":64,"free_threaded":false,"virtual_environment":null,"packaging_available":false,"compatible_tags":[]}
+{"implementation":"CPython","version":[3,13,5],"soabi":"cpython-313-x86_64-linux-gnu","cache_tag":"cpython-313","platform":"linux-x86_64","pointer_width":64,"free_threaded":false,"virtual_environment":null}

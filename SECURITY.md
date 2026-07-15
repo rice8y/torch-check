@@ -15,6 +15,7 @@ Please use [GitHub's private security-advisory feature](https://github.com/rice8
 - Generated install commands are displayed but never executed.
 - Package metadata is accepted only from the official HTTPS PyTorch host allowlist and is subject to redirect, timeout, and response-size checks.
 - Cache directories and files are opened with restrictive permissions, symlinks are rejected, and complete snapshots are replaced atomically under a lock.
+- The release installer downloads only HTTPS GitHub Release assets, requires the matching bounded `SHA256SUMS` entry, extracts only the expected binary member, and stages replacements in the destination directory; the checksum protects transfer integrity but does not replace trust in the GitHub repository and release account.
 
 ## Reports and redaction
 

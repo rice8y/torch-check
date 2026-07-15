@@ -39,7 +39,7 @@ fn environment() -> Environment {
                 "cp312-cp312-manylinux_2_28_x86_64".to_owned(),
                 "py3-none-any".to_owned(),
             ],
-            tag_source: TagSource::Packaging,
+            tag_source: TagSource::Builtin,
         }),
         nvidia: NvidiaInfo {
             status: NvidiaDetectionStatus::NoDevices,

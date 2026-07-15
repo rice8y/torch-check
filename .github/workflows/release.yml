@@ -23,6 +23,10 @@ jobs:
         run: test "v$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')" = "$GITHUB_REF_NAME"
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Validate release installer
+        run: |
+          shellcheck scripts/install.sh scripts/tests/test_install.sh
+          scripts/tests/test_install.sh
       - name: Validate reviewed compatibility metadata
         run: |
           python3 -m unittest discover -s scripts/tests -v
@@ -99,6 +103,8 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.macos_deployment_target }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Smoke-test release installer on the native shell
+        run: scripts/tests/test_install.sh
       - name: Install Rust target
         run: |
           rustup toolchain install stable --profile minimal

@@ -10,8 +10,7 @@ use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 use std::str::FromStr;
-use std::thread::{self, JoinHandle};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use csv::ReaderBuilder;
 use regex::Regex;
@@ -25,24 +24,21 @@ use crate::core::{
     OperatingSystem, PlatformInfo, PythonInfo, TagSource, ToolkitSource,
     is_unsafe_terminal_character,
 };
-use crate::process::{isolate_process_tree, terminate_process_group, terminate_process_tree};
+use crate::process::{
+    ReaderThread, ReaderWaitError, isolate_process_tree, output_drain_timeout, spawn_reader_thread,
+    terminate_process_group, terminate_process_tree,
+};
 
 const DEFAULT_COMMAND_TIMEOUT: Duration = Duration::from_secs(8);
 const DEFAULT_MAX_COMMAND_OUTPUT_BYTES: usize = 1024 * 1024;
 const MAX_TEXT_FILE_BYTES: u64 = 1024 * 1024;
 const MAX_ELF_FILE_BYTES: u64 = 64 * 1024 * 1024;
-const MAX_PYTHON_TAGS: usize = 8192;
-const MAX_TAG_LENGTH: usize = 256;
-
 const PYTHON_PROBE: &str = r#"
 import json
 import platform
 import struct
 import sys
 import sysconfig
-
-tags = []
-packaging_available = False
 
 cache_tag = getattr(sys.implementation, "cache_tag", None)
 gil_disabled = sysconfig.get_config_var("Py_GIL_DISABLED")
@@ -58,8 +54,6 @@ print(json.dumps({
     "pointer_width": struct.calcsize("P") * 8,
     "free_threaded": free_threaded,
     "virtual_environment": virtual_environment,
-    "packaging_available": packaging_available,
-    "compatible_tags": tags,
 }, separators=(",", ":")))
 "#;
 
@@ -196,6 +190,14 @@ pub enum CommandError {
         /// Stream that failed.
         stream: OutputStream,
     },
+    /// An inherited pipe remained open after the direct child exited.
+    #[error("timed out draining {stream} from {program} after the child exited")]
+    ReaderTimedOut {
+        /// Display form of the executable.
+        program: String,
+        /// Stream that did not reach EOF.
+        stream: OutputStream,
+    },
     /// The process did not exit before its deadline.
     #[error("{program} timed out after {timeout:?}")]
     TimedOut {
@@ -225,7 +227,7 @@ impl CommandError {
     }
 
     fn is_timeout(&self) -> bool {
-        matches!(self, Self::TimedOut { .. })
+        matches!(self, Self::TimedOut { .. } | Self::ReaderTimedOut { .. })
     }
 }
 
@@ -263,6 +265,7 @@ where
         program: display_program.clone(),
         source,
     })?;
+    let started = Instant::now();
     let stdout = child.stdout.take().expect("piped stdout must be present");
     let stderr = child.stderr.take().expect("piped stderr must be present");
 
@@ -281,17 +284,14 @@ where
         Ok(reader) => reader,
         Err(error) => {
             terminate_process_tree(&mut child);
-            let _ = stdout_reader.join();
             return Err(error);
         }
     };
 
-    let status = match child.wait_timeout(options.timeout) {
+    let status = match child.wait_timeout(remaining_timeout(started, options.timeout)) {
         Ok(Some(status)) => status,
         Ok(None) => {
             terminate_process_tree(&mut child);
-            let _ = join_reader(stdout_reader, &display_program, OutputStream::Stdout);
-            let _ = join_reader(stderr_reader, &display_program, OutputStream::Stderr);
             return Err(CommandError::TimedOut {
                 program: display_program,
                 timeout: options.timeout,
@@ -299,8 +299,6 @@ where
         }
         Err(source) => {
             terminate_process_tree(&mut child);
-            let _ = join_reader(stdout_reader, &display_program, OutputStream::Stdout);
-            let _ = join_reader(stderr_reader, &display_program, OutputStream::Stderr);
             return Err(CommandError::Wait {
                 program: display_program,
                 source,
@@ -310,8 +308,18 @@ where
 
     terminate_process_group(child.id());
 
-    let stdout = join_reader(stdout_reader, &display_program, OutputStream::Stdout)?;
-    let stderr = join_reader(stderr_reader, &display_program, OutputStream::Stderr)?;
+    let stdout = join_reader(
+        stdout_reader,
+        output_drain_timeout(remaining_timeout(started, options.timeout)),
+        &display_program,
+        OutputStream::Stdout,
+    )?;
+    let stderr = join_reader(
+        stderr_reader,
+        output_drain_timeout(remaining_timeout(started, options.timeout)),
+        &display_program,
+        OutputStream::Stderr,
+    )?;
     if stdout.exceeded {
         return Err(CommandError::OutputLimitExceeded {
             program: display_program,
@@ -339,18 +347,18 @@ fn spawn_reader<R>(
     limit: usize,
     program: &str,
     stream: OutputStream,
-) -> Result<JoinHandle<io::Result<BoundedRead>>, CommandError>
+) -> Result<ReaderThread<io::Result<BoundedRead>>, CommandError>
 where
     R: Read + Send + 'static,
 {
-    thread::Builder::new()
-        .name(format!("torch-check-{stream}"))
-        .spawn(move || read_bounded(reader, limit))
-        .map_err(|source| CommandError::ReaderSpawn {
-            program: program.to_owned(),
-            stream,
-            source,
-        })
+    spawn_reader_thread(format!("torch-check-{stream}"), move || {
+        read_bounded(reader, limit)
+    })
+    .map_err(|source| CommandError::ReaderSpawn {
+        program: program.to_owned(),
+        stream,
+        source,
+    })
 }
 
 fn read_bounded(mut reader: impl Read, limit: usize) -> io::Result<BoundedRead> {
@@ -371,21 +379,32 @@ fn read_bounded(mut reader: impl Read, limit: usize) -> io::Result<BoundedRead> 
 }
 
 fn join_reader(
-    reader: JoinHandle<io::Result<BoundedRead>>,
+    reader: ReaderThread<io::Result<BoundedRead>>,
+    remaining: Duration,
     program: &str,
     stream: OutputStream,
 ) -> Result<BoundedRead, CommandError> {
     reader
-        .join()
-        .map_err(|_| CommandError::ReaderPanicked {
-            program: program.to_owned(),
-            stream,
+        .wait(remaining)
+        .map_err(|error| match error {
+            ReaderWaitError::TimedOut => CommandError::ReaderTimedOut {
+                program: program.to_owned(),
+                stream,
+            },
+            ReaderWaitError::Panicked => CommandError::ReaderPanicked {
+                program: program.to_owned(),
+                stream,
+            },
         })?
         .map_err(|source| CommandError::Read {
             program: program.to_owned(),
             stream,
             source,
         })
+}
+
+fn remaining_timeout(started: Instant, timeout: Duration) -> Duration {
+    timeout.saturating_sub(started.elapsed())
 }
 
 /// Detects the current host and selected Python/NVIDIA environment.
@@ -912,8 +931,6 @@ struct PythonProbeResult {
     pointer_width: u16,
     free_threaded: bool,
     virtual_environment: Option<String>,
-    packaging_available: bool,
-    compatible_tags: Vec<String>,
 }
 
 fn detect_python(
@@ -1067,26 +1084,13 @@ fn python_info_from_probe(
         return Err("Python returned an empty implementation".to_owned());
     }
 
-    let mut seen = HashSet::new();
-    let packaging_tags = probe
-        .compatible_tags
-        .into_iter()
-        .take(MAX_PYTHON_TAGS)
-        .filter(|tag| valid_compatibility_tag(tag))
-        .filter(|tag| seen.insert(tag.clone()))
-        .collect::<Vec<_>>();
-    let use_packaging = probe.packaging_available && !packaging_tags.is_empty();
-    let compatible_tags = if use_packaging {
-        packaging_tags
-    } else {
-        builtin_compatible_tags(
-            &implementation,
-            &version,
-            probe.free_threaded,
-            &probe.platform,
-            glibc,
-        )
-    };
+    let compatible_tags = builtin_compatible_tags(
+        &implementation,
+        &version,
+        probe.free_threaded,
+        &probe.platform,
+        glibc,
+    );
 
     // Keep the launcher selected by the caller. Resolving `sys.executable` or canonicalizing this
     // path would follow a venv's `bin/python` symlink to the base interpreter and would make both
@@ -1109,11 +1113,7 @@ fn python_info_from_probe(
         free_threaded: probe.free_threaded,
         virtual_environment,
         compatible_tags,
-        tag_source: if use_packaging {
-            TagSource::Packaging
-        } else {
-            TagSource::Builtin
-        },
+        tag_source: TagSource::Builtin,
     })
 }
 
@@ -1171,20 +1171,6 @@ fn infer_virtual_environment(executable: &Path) -> Option<PathBuf> {
     Some(root.to_path_buf())
 }
 
-fn valid_compatibility_tag(tag: &str) -> bool {
-    if tag.is_empty() || tag.len() > MAX_TAG_LENGTH || !tag.is_ascii() {
-        return false;
-    }
-    let parts = tag.split('-').collect::<Vec<_>>();
-    parts.len() == 3
-        && parts.iter().all(|part| {
-            !part.is_empty()
-                && part
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'.'))
-        })
-}
-
 fn builtin_compatible_tags(
     implementation: &str,
     version: &NumericVersion,
@@ -1218,20 +1204,37 @@ fn builtin_compatible_tags(
     platforms.push(normalized_platform);
 
     let mut tags = Vec::new();
+    let mut generic_interpreters = vec![format!("py{major}{minor}"), format!("py{major}")];
+    if major == 3 {
+        let oldest_minor = minor.saturating_sub(63);
+        generic_interpreters.extend(
+            (oldest_minor..minor)
+                .rev()
+                .map(|compatible_minor| format!("py3{compatible_minor}")),
+        );
+    }
     if implementation == "cpython" {
         let interpreter = format!("cp{major}{minor}");
         let abi = format!("{interpreter}{}", if free_threaded { "t" } else { "" });
         for platform in &platforms {
             tags.push(format!("{interpreter}-{abi}-{platform}"));
-            if !free_threaded {
-                tags.push(format!("{interpreter}-abi3-{platform}"));
+            if !free_threaded && major == 3 {
+                let oldest_abi3_minor = minor.saturating_sub(63).max(2);
+                for abi3_minor in (oldest_abi3_minor..=minor).rev() {
+                    tags.push(format!("cp3{abi3_minor}-abi3-{platform}"));
+                }
             }
             tags.push(format!("{interpreter}-none-{platform}"));
         }
+        tags.push(format!("{interpreter}-none-any"));
     }
-    tags.push(format!("py{major}-none-any"));
-    if major == 3 {
-        tags.push("py3-none-any".to_owned());
+    for platform in &platforms {
+        for interpreter in &generic_interpreters {
+            tags.push(format!("{interpreter}-none-{platform}"));
+        }
+    }
+    for interpreter in generic_interpreters {
+        tags.push(format!("{interpreter}-none-any"));
     }
     let mut seen = HashSet::new();
     tags.retain(|tag| seen.insert(tag.clone()));
@@ -1940,9 +1943,7 @@ MALFORMED='unterminated
             "platform": "linux-x86_64",
             "pointer_width": 64,
             "free_threaded": false,
-            "virtual_environment": null,
-            "packaging_available": false,
-            "compatible_tags": []
+            "virtual_environment": null
         }))
         .expect("probe fixture");
 
@@ -1951,14 +1952,7 @@ MALFORMED='unterminated
 
         assert_eq!(python.executable, executable);
         assert_eq!(python.virtual_environment.as_deref(), Some(root.as_path()));
-    }
-
-    #[test]
-    fn validates_packaging_tags_defensively() {
-        assert!(valid_compatibility_tag("cp313-cp313-manylinux_2_17_x86_64"));
-        assert!(!valid_compatibility_tag("cp313-cp313"));
-        assert!(!valid_compatibility_tag("cp313-cp313-manylinux-x86-64"));
-        assert!(!valid_compatibility_tag("cp313-cp313-💥"));
+        assert_eq!(python.tag_source, TagSource::Builtin);
     }
 
     #[test]
@@ -1973,6 +1967,10 @@ MALFORMED='unterminated
         assert_eq!(tags[0], "cp313-cp313-manylinux_2_35_x86_64");
         assert!(tags.contains(&"cp313-cp313-manylinux_2_17_x86_64".to_owned()));
         assert!(tags.contains(&"cp313-cp313-manylinux2014_x86_64".to_owned()));
+        assert!(tags.contains(&"cp312-abi3-manylinux_2_17_x86_64".to_owned()));
+        assert!(tags.contains(&"py3-none-manylinux_2_17_x86_64".to_owned()));
+        assert!(tags.contains(&"py312-none-any".to_owned()));
+        assert!(tags.contains(&"cp313-none-any".to_owned()));
         assert!(tags.contains(&"py3-none-any".to_owned()));
     }
 

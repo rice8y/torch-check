@@ -60,6 +60,9 @@ pub struct ResolverOptions {
     /// Installer command style.
     pub installer: Installer,
     /// Include the detected Python executable in the generated install command.
+    ///
+    /// Callers may disable this only after proving the installer's active environment selects the
+    /// same interpreter. The safe default pins the exact interpreter used for resolution.
     pub pin_python_in_install_command: bool,
     /// Companion distributions to pin to the matching release.
     pub companions: BTreeSet<CompanionPackage>,
@@ -71,7 +74,7 @@ impl Default for ResolverOptions {
             torch_version: None,
             include_prerelease: false,
             installer: Installer::Pip,
-            pin_python_in_install_command: false,
+            pin_python_in_install_command: true,
             companions: BTreeSet::new(),
         }
     }
@@ -773,7 +776,7 @@ fn requires_python_matches(specifier: Option<&str>, python: &PythonInfo) -> bool
 
 fn evaluate_platform<'a>(
     environment: &Environment,
-    _python: Option<&PythonInfo>,
+    python: Option<&PythonInfo>,
     wheels: &[&'a TorchWheel],
 ) -> (CompatibilityCheck, Option<&'a TorchWheel>) {
     if environment.platform.os != OperatingSystem::Linux
@@ -794,6 +797,32 @@ fn evaluate_platform<'a>(
             None,
         );
     }
+    let Some(python) = python else {
+        return (
+            CompatibilityCheck::new(
+                CheckStatus::Unknown,
+                vec![
+                    DecisionReason::new(ReasonCode::PlatformMismatch)
+                        .with_detail("reason", "python_unavailable"),
+                ],
+            ),
+            None,
+        );
+    };
+    let normalized_python_platform = normalize_python_platform(&python.platform);
+    if python.pointer_width != 64 || normalized_python_platform != "linux_x86_64" {
+        return (
+            CompatibilityCheck::new(
+                CheckStatus::Fail,
+                vec![
+                    DecisionReason::new(ReasonCode::PlatformMismatch)
+                        .with_detail("python_platform", python.platform.clone())
+                        .with_detail("pointer_width", python.pointer_width.to_string()),
+                ],
+            ),
+            None,
+        );
+    }
     if wheels.is_empty() {
         return (
             CompatibilityCheck::new(
@@ -809,7 +838,7 @@ fn evaluate_platform<'a>(
     let mut unknown = None;
     let mut oldest_required_glibc: Option<NumericVersion> = None;
     for wheel in wheels {
-        match platform_wheel_status(wheel, environment) {
+        match platform_wheel_status(wheel, environment, python) {
             PlatformMatch::Pass => {
                 return (
                     CompatibilityCheck::new(
@@ -866,9 +895,15 @@ enum PlatformMatch {
     Fail,
 }
 
-fn platform_wheel_status(wheel: &TorchWheel, environment: &Environment) -> PlatformMatch {
+fn platform_wheel_status(
+    wheel: &TorchWheel,
+    environment: &Environment,
+    python: &PythonInfo,
+) -> PlatformMatch {
     if environment.platform.os != OperatingSystem::Linux
         || environment.platform.architecture != Architecture::X86_64
+        || python.pointer_width != 64
+        || normalize_python_platform(&python.platform) != "linux_x86_64"
     {
         return PlatformMatch::Fail;
     }
@@ -876,10 +911,15 @@ fn platform_wheel_status(wheel: &TorchWheel, environment: &Environment) -> Platf
     let mut too_old = None;
     for tag in &wheel.platform_tags {
         if tag == "any" {
-            return PlatformMatch::Pass;
+            if wheel_tag_is_compatible(wheel, python, tag) {
+                return PlatformMatch::Pass;
+            }
+            continue;
         }
         if tag == "linux_x86_64" {
-            saw_unknown = true;
+            if wheel_tag_is_compatible(wheel, python, tag) {
+                saw_unknown = true;
+            }
             continue;
         }
         let required = if tag == "manylinux1_x86_64" {
@@ -892,10 +932,18 @@ fn platform_wheel_status(wheel: &TorchWheel, environment: &Environment) -> Platf
             parse_manylinux_floor(tag)
         };
         if let Some(required) = required {
+            let tag_compatible = wheel_tag_is_compatible(wheel, python, tag);
             match &environment.glibc {
-                Some(glibc) if glibc >= &required => return PlatformMatch::Pass,
-                Some(_) => too_old = Some(required),
-                None => saw_unknown = true,
+                Some(glibc) if glibc >= &required && tag_compatible => {
+                    return PlatformMatch::Pass;
+                }
+                Some(glibc) if glibc < &required => {
+                    if too_old.as_ref().is_none_or(|current| &required < current) {
+                        too_old = Some(required);
+                    }
+                }
+                None if tag_compatible => saw_unknown = true,
+                Some(_) | None => {}
             }
         }
     }
@@ -906,6 +954,35 @@ fn platform_wheel_status(wheel: &TorchWheel, environment: &Environment) -> Platf
     } else {
         PlatformMatch::Fail
     }
+}
+
+fn wheel_tag_is_compatible(wheel: &TorchWheel, python: &PythonInfo, platform_tag: &str) -> bool {
+    python.compatible_tags.iter().any(|tag| {
+        let mut parts = tag.splitn(3, '-');
+        let Some(python_tag) = parts.next() else {
+            return false;
+        };
+        let Some(abi_tag) = parts.next() else {
+            return false;
+        };
+        let Some(python_platform_tag) = parts.next() else {
+            return false;
+        };
+        python_platform_tag == platform_tag
+            && wheel.python_tags.iter().any(|tag| tag == python_tag)
+            && wheel.abi_tags.iter().any(|tag| tag == abi_tag)
+    })
+}
+
+fn normalize_python_platform(platform: &str) -> String {
+    platform
+        .trim()
+        .chars()
+        .map(|character| match character {
+            '-' | '.' => '_',
+            other => other.to_ascii_lowercase(),
+        })
+        .collect()
 }
 
 fn parse_manylinux_floor(tag: &str) -> Option<NumericVersion> {
@@ -1466,7 +1543,7 @@ mod tests {
                     "cp313-cp313-manylinux_2_28_x86_64".to_owned(),
                     "cp313-cp313-manylinux_2_17_x86_64".to_owned(),
                 ],
-                tag_source: TagSource::Packaging,
+                tag_source: TagSource::Builtin,
             }),
             nvidia: NvidiaInfo {
                 status: NvidiaDetectionStatus::Detected,
@@ -1654,18 +1731,26 @@ mod tests {
         let mut env = environment("580.65.06", "13.0");
         env.glibc = Some("2.27".parse().expect("glibc"));
         assert!(matches!(
-            platform_wheel_status(&wheel("2.13.0", "cu130"), &env),
+            platform_wheel_status(
+                &wheel("2.13.0", "cu130"),
+                &env,
+                env.python.as_ref().expect("python")
+            ),
             PlatformMatch::GlibcTooOld(_)
         ));
         env.glibc = Some("2.28".parse().expect("glibc"));
         assert!(matches!(
-            platform_wheel_status(&wheel("2.13.0", "cu130"), &env),
+            platform_wheel_status(
+                &wheel("2.13.0", "cu130"),
+                &env,
+                env.python.as_ref().expect("python")
+            ),
             PlatformMatch::Pass
         ));
     }
 
     #[test]
-    fn generated_pip_command_uses_active_environment_by_default() {
+    fn generated_install_commands_target_detected_python_by_default() {
         let env = environment("580.65.06", "13.0");
         let candidate = Candidate {
             torch_version: "2.13.0".to_owned(),
@@ -1692,16 +1777,55 @@ mod tests {
             &RuleSet::load().expect("rules"),
         )
         .expect("command");
-        assert_eq!(command.program, "pip");
+        assert_eq!(command.program, "/usr/bin/python3");
         assert_eq!(
             command.args,
             [
+                "-m",
+                "pip",
                 "install",
+                "--isolated",
                 "torch==2.13.0",
                 "--index-url",
                 "https://download.pytorch.org/whl/cu130"
             ]
         );
+
+        let active_options = ResolverOptions {
+            pin_python_in_install_command: false,
+            ..ResolverOptions::default()
+        };
+        let active_command = build_install_command(
+            &env,
+            &snapshot(vec![]),
+            &candidate,
+            &active_options,
+            &RuleSet::load().expect("rules"),
+        )
+        .expect("active environment command");
+        assert_eq!(active_command.program, "pip");
+        assert_eq!(active_command.args[0], "install");
+
+        for installer in [Installer::Uv, Installer::UvAdd] {
+            let options = ResolverOptions {
+                installer,
+                ..ResolverOptions::default()
+            };
+            let command = build_install_command(
+                &env,
+                &snapshot(vec![]),
+                &candidate,
+                &options,
+                &RuleSet::load().expect("rules"),
+            )
+            .expect("uv command");
+            let python_position = command
+                .args
+                .iter()
+                .position(|argument| argument == "--python")
+                .expect("uv command pins Python");
+            assert_eq!(command.args[python_position + 1], "/usr/bin/python3");
+        }
     }
 
     #[test]
@@ -2170,13 +2294,110 @@ mod tests {
 
     #[test]
     fn generic_linux_wheel_does_not_claim_a_verified_glibc_floor() {
-        let env = environment("580.65.06", "13.0");
+        let mut env = environment("580.65.06", "13.0");
+        env.python
+            .as_mut()
+            .expect("python")
+            .compatible_tags
+            .push("cp313-cp313-linux_x86_64".to_owned());
         let mut generic = wheel("2.13.0", "cu130");
         generic.platform_tags = vec!["linux_x86_64".to_owned()];
         assert!(matches!(
-            platform_wheel_status(&generic, &env),
+            platform_wheel_status(&generic, &env, env.python.as_ref().expect("python")),
             PlatformMatch::Unknown
         ));
+    }
+
+    #[test]
+    fn thirty_two_bit_python_cannot_select_an_x86_64_wheel() {
+        let mut env = environment("580.65.06", "13.0");
+        let python = env.python.as_mut().expect("python");
+        python.pointer_width = 32;
+        python.platform = "linux-i686".to_owned();
+        python.compatible_tags = vec!["cp313-cp313-manylinux_2_17_i686".to_owned()];
+        let candidate = wheel("2.13.0", "cu130");
+
+        let (check, selected) = evaluate_platform(&env, env.python.as_ref(), &[&candidate]);
+
+        assert_eq!(check.status, CheckStatus::Fail);
+        assert!(selected.is_none());
+        assert_eq!(
+            check.reasons[0]
+                .details
+                .get("pointer_width")
+                .map(String::as_str),
+            Some("32")
+        );
+    }
+
+    #[test]
+    fn cross_arch_python_cannot_select_a_host_wheel() {
+        let mut env = environment("580.65.06", "13.0");
+        let python = env.python.as_mut().expect("python");
+        python.platform = "linux-aarch64".to_owned();
+        python.compatible_tags = vec!["cp313-cp313-manylinux_2_17_aarch64".to_owned()];
+        let candidate = wheel("2.13.0", "cu130");
+
+        let (check, selected) = evaluate_platform(&env, env.python.as_ref(), &[&candidate]);
+
+        assert_eq!(check.status, CheckStatus::Fail);
+        assert!(selected.is_none());
+    }
+
+    #[test]
+    fn wheel_tag_must_match_one_complete_interpreter_tag() {
+        let mut env = environment("580.65.06", "13.0");
+        env.python.as_mut().expect("python").compatible_tags = vec![
+            "cp313-cp313-manylinux_2_17_x86_64".to_owned(),
+            "py3-none-any".to_owned(),
+        ];
+        let mut candidate = wheel("2.13.0", "cu130");
+        candidate.platform_tags = vec!["any".to_owned()];
+
+        let (check, selected) = evaluate_platform(&env, env.python.as_ref(), &[&candidate]);
+
+        assert_eq!(check.status, CheckStatus::Fail);
+        assert!(selected.is_none());
+    }
+
+    #[test]
+    fn older_abi3_wheel_passes_python_and_platform_checks() {
+        let mut env = environment("580.65.06", "13.0");
+        env.python
+            .as_mut()
+            .expect("python")
+            .compatible_tags
+            .push("cp312-abi3-manylinux_2_28_x86_64".to_owned());
+        let mut candidate = wheel("2.13.0", "cu130");
+        candidate.python_tags = vec!["cp312".to_owned()];
+        candidate.abi_tags = vec!["abi3".to_owned()];
+
+        let (_, python_matches) = evaluate_python(env.python.as_ref(), &[&candidate]);
+        let (platform, selected) = evaluate_platform(&env, env.python.as_ref(), &python_matches);
+
+        assert_eq!(python_matches, vec![&candidate]);
+        assert_eq!(platform.status, CheckStatus::Pass);
+        assert_eq!(selected, Some(&candidate));
+    }
+
+    #[test]
+    fn generic_platform_wheel_passes_one_complete_interpreter_tag() {
+        let mut env = environment("580.65.06", "13.0");
+        env.python
+            .as_mut()
+            .expect("python")
+            .compatible_tags
+            .push("py3-none-manylinux_2_28_x86_64".to_owned());
+        let mut candidate = wheel("2.13.0", "cu130");
+        candidate.python_tags = vec!["py3".to_owned()];
+        candidate.abi_tags = vec!["none".to_owned()];
+
+        let (_, python_matches) = evaluate_python(env.python.as_ref(), &[&candidate]);
+        let (platform, selected) = evaluate_platform(&env, env.python.as_ref(), &python_matches);
+
+        assert_eq!(python_matches, vec![&candidate]);
+        assert_eq!(platform.status, CheckStatus::Pass);
+        assert_eq!(selected, Some(&candidate));
     }
 
     #[test]

@@ -331,12 +331,23 @@ pub async fn load_index(options: &IndexOptions) -> Result<LoadedIndex, IndexErro
             let write_path = cache_path.clone();
             let write_dir = cache_dir.clone();
             let write_snapshot = snapshot.clone();
-            tokio::task::spawn_blocking(move || {
+            let write_policy = policy.clone();
+            let committed = tokio::task::spawn_blocking(move || {
                 let _lock = open_cache_lock(&write_dir)?;
-                write_cache(&write_dir, &write_path, &write_snapshot)
+                commit_cache_locked(&write_dir, &write_path, &write_snapshot, &write_policy)
             })
             .await??;
-            Ok(loaded(snapshot, MetadataOrigin::Network, now, options.ttl))
+            match committed {
+                CacheCommit::Written => {
+                    Ok(loaded(snapshot, MetadataOrigin::Network, now, options.ttl))
+                }
+                CacheCommit::KeptCurrent(current) => Ok(loaded(
+                    current,
+                    MetadataOrigin::FreshCache,
+                    now,
+                    options.ttl,
+                )),
+            }
         }
         Err(network_error) => {
             if let Some(snapshot) = usable_cache {
@@ -1383,6 +1394,45 @@ fn write_cache(cache_dir: &Path, path: &Path, snapshot: &IndexSnapshot) -> Resul
     Ok(())
 }
 
+#[derive(Debug, Eq, PartialEq)]
+enum CacheCommit {
+    Written,
+    KeptCurrent(IndexSnapshot),
+}
+
+/// Commits a fetched snapshot while the cache lock is held.
+///
+/// Fetches intentionally happen without holding the lock. Another refresh may
+/// therefore publish an equally recent or newer snapshot before this function
+/// runs. In that case the current cache is kept and returned to the caller
+/// instead of being overwritten by a fetch that happened to finish later.
+fn commit_cache_locked(
+    cache_dir: &Path,
+    path: &Path,
+    candidate: &IndexSnapshot,
+    policy: &FetchPolicy,
+) -> Result<CacheCommit, IndexError> {
+    let current = match read_cache(path, policy, unix_now()?) {
+        Ok(snapshot) => snapshot,
+        // A successful complete refresh is allowed to repair a malformed
+        // regular cache entry. `write_cache` still rejects symlinks and other
+        // unsafe filesystem objects before replacement.
+        Err(IndexError::InvalidCache { .. }) => None,
+        Err(error) => return Err(error),
+    };
+    match current {
+        Some(current)
+            if current.packages == candidate.packages
+                && current.fetched_at >= candidate.fetched_at =>
+        {
+            return Ok(CacheCommit::KeptCurrent(current));
+        }
+        Some(_) | None => {}
+    }
+    write_cache(cache_dir, path, candidate)?;
+    Ok(CacheCommit::Written)
+}
+
 #[cfg(unix)]
 fn sync_cache_directory(path: &Path) -> Result<(), IndexError> {
     File::open(path)
@@ -1443,6 +1493,31 @@ mod tests {
 
     fn test_policy() -> FetchPolicy {
         FetchPolicy::official().expect("valid built-in policy")
+    }
+
+    fn cache_snapshot(fetched_at: u64) -> IndexSnapshot {
+        let wheel_url = format!(
+            "https://download.pytorch.org/whl/cpu/torch-2.6.0-cp313-cp313-linux_x86_64.whl#sha256={}",
+            "a".repeat(64)
+        );
+        IndexSnapshot {
+            schema_version: INDEX_SCHEMA_VERSION,
+            fetched_at,
+            source: OFFICIAL_ROOT.to_owned(),
+            packages: vec!["torch".to_owned()],
+            variants: vec![CudaVariant::Cpu],
+            wheels: vec![
+                parse_wheel_link(
+                    "torch",
+                    &CudaVariant::Cpu,
+                    "torch-2.6.0-cp313-cp313-linux_x86_64.whl".to_owned(),
+                    &Url::parse(&wheel_url).expect("URL"),
+                    false,
+                    None,
+                )
+                .expect("wheel"),
+            ],
+        }
     }
 
     #[test]
@@ -1700,28 +1775,7 @@ mod tests {
         let cache_dir = directory.path().join("cache");
         ensure_cache_directory(&cache_dir).expect("prepare cache");
         let path = cache_path_for(&cache_dir, &["torch".to_owned()]);
-        let wheel_url = format!(
-            "https://download.pytorch.org/whl/cpu/torch-2.6.0-cp313-cp313-linux_x86_64.whl#sha256={}",
-            "a".repeat(64)
-        );
-        let snapshot = IndexSnapshot {
-            schema_version: INDEX_SCHEMA_VERSION,
-            fetched_at: unix_now().expect("clock"),
-            source: OFFICIAL_ROOT.to_owned(),
-            packages: vec!["torch".to_owned()],
-            variants: vec![CudaVariant::Cpu],
-            wheels: vec![
-                parse_wheel_link(
-                    "torch",
-                    &CudaVariant::Cpu,
-                    "torch-2.6.0-cp313-cp313-linux_x86_64.whl".to_owned(),
-                    &Url::parse(&wheel_url).expect("URL"),
-                    false,
-                    None,
-                )
-                .expect("wheel"),
-            ],
-        };
+        let snapshot = cache_snapshot(unix_now().expect("clock"));
         write_cache(&cache_dir, &path, &snapshot).expect("write cache");
         let loaded = read_cache(&path, &test_policy(), unix_now().expect("clock"))
             .expect("read cache")
@@ -1743,5 +1797,48 @@ mod tests {
                 0o600
             );
         }
+    }
+
+    #[test]
+    fn cache_commit_is_monotonic_across_overlapping_refreshes() {
+        let directory = tempfile::tempdir().expect("temporary directory");
+        let cache_dir = directory.path().join("cache");
+        ensure_cache_directory(&cache_dir).expect("prepare cache");
+        let path = cache_path_for(&cache_dir, &["torch".to_owned()]);
+        let now = unix_now().expect("clock");
+        let older = cache_snapshot(now.saturating_sub(20));
+        let current = cache_snapshot(now.saturating_sub(10));
+        let newer = cache_snapshot(now);
+        write_cache(&cache_dir, &path, &current).expect("seed cache");
+
+        assert_eq!(
+            commit_cache_locked(&cache_dir, &path, &older, &test_policy())
+                .expect("skip older refresh"),
+            CacheCommit::KeptCurrent(current.clone())
+        );
+        assert_eq!(
+            read_cache(&path, &test_policy(), now)
+                .expect("read cache")
+                .expect("snapshot"),
+            current
+        );
+
+        assert_eq!(
+            commit_cache_locked(&cache_dir, &path, &current, &test_policy())
+                .expect("keep an equally recent refresh"),
+            CacheCommit::KeptCurrent(current.clone())
+        );
+
+        assert_eq!(
+            commit_cache_locked(&cache_dir, &path, &newer, &test_policy())
+                .expect("commit newer refresh"),
+            CacheCommit::Written
+        );
+        assert_eq!(
+            read_cache(&path, &test_policy(), now)
+                .expect("read cache")
+                .expect("snapshot"),
+            newer
+        );
     }
 }

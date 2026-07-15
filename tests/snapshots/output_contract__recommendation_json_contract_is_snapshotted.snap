@@ -25,7 +25,7 @@ expression: report
         "cp312-cp312-manylinux_2_28_x86_64",
         "py3-none-any"
       ],
-      "tag_source": "packaging"
+      "tag_source": "builtin"
     },
     "nvidia": {
       "status": "no_devices",

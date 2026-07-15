@@ -9,7 +9,6 @@ use std::path::PathBuf;
 use std::process::{Child, Command, ExitStatus, Stdio};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::thread;
 use std::time::{Duration, Instant};
 
 use serde::Deserialize;
@@ -19,7 +18,10 @@ use crate::core::{
     CompatibilityStatus, ComputeCapability, Diagnostic, DiagnosticCode, DiagnosticSeverity,
     SCHEMA_VERSION, VerificationCheck, VerificationReport, VerifiedDevice,
 };
-use crate::process::{isolate_process_tree, terminate_process_group, terminate_process_tree};
+use crate::process::{
+    ReaderThread, ReaderWaitError, isolate_process_tree, output_drain_timeout, spawn_reader_thread,
+    terminate_process_group, terminate_process_tree,
+};
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(60);
 const DEFAULT_MAX_OUTPUT_BYTES: usize = 1024 * 1024;
@@ -312,15 +314,21 @@ fn run_probe(options: &VerifyOptions, selected_json: &str) -> Result<ProbeOutput
         .ok_or_else(|| RunnerFailure::Capture("stderr pipe was not created".to_owned()))?;
 
     let budget = Arc::new(OutputBudget::new(options.max_output_bytes));
-    let stdout_handle = spawn_reader(stdout, Arc::clone(&budget));
-    let stderr_handle = spawn_reader(stderr, Arc::clone(&budget));
+    let stdout_handle =
+        spawn_reader(stdout, Arc::clone(&budget), "stdout").map_err(RunnerFailure::Capture)?;
+    let stderr_handle = match spawn_reader(stderr, Arc::clone(&budget), "stderr") {
+        Ok(reader) => reader,
+        Err(error) => {
+            terminate_process_tree(&mut child);
+            return Err(RunnerFailure::Capture(error));
+        }
+    };
+    let started = Instant::now();
 
     let status = match wait_for_child(&mut child, options.timeout, &budget) {
         Ok(status) => status,
         Err(failure) => {
             terminate_process_tree(&mut child);
-            let _ = stdout_handle.join();
-            let _ = stderr_handle.join();
             return Err(failure);
         }
     };
@@ -328,12 +336,18 @@ fn run_probe(options: &VerifyOptions, selected_json: &str) -> Result<ProbeOutput
     terminate_process_group(child.id());
 
     let stdout = stdout_handle
-        .join()
-        .map_err(|_| RunnerFailure::Capture("stdout reader panicked".to_owned()))?
+        .wait(output_drain_timeout(remaining_timeout(
+            started,
+            options.timeout,
+        )))
+        .map_err(|error| reader_failure(error, "stdout"))?
         .map_err(RunnerFailure::Capture)?;
     let stderr = stderr_handle
-        .join()
-        .map_err(|_| RunnerFailure::Capture("stderr reader panicked".to_owned()))?
+        .wait(output_drain_timeout(remaining_timeout(
+            started,
+            options.timeout,
+        )))
+        .map_err(|error| reader_failure(error, "stderr"))?
         .map_err(RunnerFailure::Capture)?;
 
     if budget.exceeded.load(Ordering::Acquire) {
@@ -425,11 +439,12 @@ impl OutputBudget {
 fn spawn_reader<R>(
     mut reader: R,
     budget: Arc<OutputBudget>,
-) -> thread::JoinHandle<Result<Vec<u8>, String>>
+    stream: &'static str,
+) -> Result<ReaderThread<Result<Vec<u8>, String>>, String>
 where
     R: Read + Send + 'static,
 {
-    thread::spawn(move || {
+    spawn_reader_thread(format!("torch-check-verify-{stream}"), move || {
         let mut captured = Vec::new();
         let mut chunk = [0_u8; 8192];
         loop {
@@ -445,6 +460,20 @@ where
             }
         }
     })
+    .map_err(|error| format!("failed to create {stream} reader: {error}"))
+}
+
+fn reader_failure(error: ReaderWaitError, stream: &str) -> RunnerFailure {
+    match error {
+        ReaderWaitError::TimedOut => RunnerFailure::Capture(format!(
+            "timed out draining {stream} after the verification child exited"
+        )),
+        ReaderWaitError::Panicked => RunnerFailure::Capture(format!("{stream} reader panicked")),
+    }
+}
+
+fn remaining_timeout(started: Instant, timeout: Duration) -> Duration {
+    timeout.saturating_sub(started.elapsed())
 }
 
 #[derive(Debug, Deserialize)]

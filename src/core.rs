@@ -385,9 +385,11 @@ pub struct PlatformInfo {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TagSource {
-    /// Produced by `packaging.tags.sys_tags()` in the selected interpreter.
+    /// Supplied by a library caller from `packaging.tags.sys_tags()`.
+    ///
+    /// The built-in detector deliberately does not import site packages in its isolated probe.
     Packaging,
-    /// Produced by the conservative built-in tag implementation.
+    /// Produced by the dependency-free built-in tag implementation.
     Builtin,
 }
 
@@ -548,7 +550,8 @@ pub enum DiagnosticCode {
     PythonUnavailable,
     /// The selected Python is not CPython.
     UnsupportedPythonImplementation,
-    /// Python tags were generated without the optional `packaging` module.
+    /// Legacy code retained for schema compatibility with reports that treated built-in tags as a
+    /// fallback.
     BuiltinPythonTags,
     /// `nvidia-smi` was unavailable.
     NvidiaSmiUnavailable,
@@ -780,7 +783,8 @@ pub enum WarningCode {
     StaleMetadata,
     /// The NVIDIA query interface was unavailable or failed.
     NvidiaDetectionIncomplete,
-    /// Python tags used the conservative built-in implementation.
+    /// Legacy code retained for schema compatibility with candidates that treated built-in tags as
+    /// a fallback.
     BuiltinPythonTags,
     /// Official release preference is not known for this pair.
     OfficialPreferenceUnknown,
@@ -919,11 +923,11 @@ pub struct CommandSpec {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Installer {
-    /// `pip install`, or `<python> -m pip install` when Python is pinned.
+    /// `<python> -m pip install`, or `pip install` only for a caller-proven active target.
     Pip,
-    /// `uv pip install`, optionally with `--python <python>`.
+    /// `uv pip install`, with `--python <python>` unless the active target is proven.
     Uv,
-    /// `uv add --index ...` for a project dependency, optionally with `--python <python>`.
+    /// `uv add --index ...` for a project dependency, normally with `--python <python>`.
     UvAdd,
 }
 

@@ -19,6 +19,8 @@ include = [
     "/data/pytorch-release-rules.json",
     "/data/schemas/**",
     "/tests/**",
+    "/scripts/install.sh",
+    "/scripts/tests/test_install.sh",
     "/Cargo.toml",
     "/Cargo.lock",
     "/README.md",

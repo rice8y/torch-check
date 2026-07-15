@@ -25,6 +25,10 @@ jobs:
         run: cargo fmt --all -- --check
       - name: Lint
         run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Validate release installer
+        run: |
+          shellcheck scripts/install.sh scripts/tests/test_install.sh
+          scripts/tests/test_install.sh
       - name: Validate reviewed compatibility metadata
         run: |
           python3 -m unittest discover -s scripts/tests -v

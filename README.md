@@ -18,6 +18,14 @@ On musl hosts, resolution fails closed with `unsupported_libc`; the static musl 
 
 ## Install
 
+The POSIX shell release installer supports Linux, macOS, and Windows under Git Bash/MSYS/Cygwin. It selects the archive for the current operating system and architecture, verifies it against the release `SHA256SUMS`, and atomically installs the binary to the user-local `$HOME/.local/bin` directory without invoking `sudo` or modifying shell startup files. Native PowerShell and Command Prompt users should install the Windows archive from GitHub Releases directly.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh
+```
+
+Pass options after `sh -s --`, for example `curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh -s -- --version 0.1.0` or `curl -fsSL https://raw.githubusercontent.com/rice8y/torch-check/main/scripts/install.sh | sh -s -- --install-dir "$HOME/bin"`; the equivalent `TORCH_CHECK_VERSION` and `TORCH_CHECK_INSTALL_DIR` environment variables are also supported. Run a downloaded copy with `--help` for the complete interface. Check the final warning and add the selected directory to `PATH` when necessary.
+
 From [crates.io](https://crates.io/crates/torch-check):
 
 ```bash
@@ -70,43 +78,37 @@ torch-check --python /opt/venv/bin/python recommend
 torch-check --gpu 0,2 recommend
 ```
 
-By default, generated installation commands target the active shell or project environment, for example an activated venv or uv project. When `--python` is supplied, the same interpreter is used for detection, verification, and the generated installation command. Commands are represented internally as an executable and argument vector; the displayed shell command is never executed by `torch-check`.
+Generated installation commands are bound to the interpreter whose tags were evaluated. `pip` and `uv add` commands pin that interpreter explicitly; `uv pip` omits `--python` only when `torch-check` has identified the exact existing environment that uv will select—an active PEP 405 environment, an active Conda environment, or the nearest `.venv`—and no uv Python override is present. When `--python` is supplied, the same interpreter is always used for detection, verification, and command generation. Commands are represented internally as an executable and argument vector; the displayed shell command is never executed by `torch-check`.
 
 `--gpu` accepts physical indices from `nvidia-smi`, not CUDA-visible ordinals. During verification, `torch-check` selects devices by UUID and reports the physical-to-logical mapping used by the isolated Python process. A numeric `CUDA_VISIBLE_DEVICES` subset is rejected when that mapping cannot be established safely.
 
 Human output adapts to the terminal width, groups identical selected GPUs, and uses restrained status colors only when stdout is a terminal. Set `NO_COLOR` or `CLICOLOR=0` to disable ANSI styling; redirected output and JSON never contain color escapes. The default recommendation is intentionally summarized. `torch-check candidates` lists only `verified`, `direct-compatible`, and `minor-compatible` results. Add `--unverified` to include candidates that still need release-configuration review, static evidence, or runtime verification, or use `--all` for every compatibility status and exclusion reason. Explicit `--torch-version` constraints remain hard filters in every mode.
 
-Current command forms are:
+Pinned command forms are:
 
 ```bash
-pip install torch==VERSION \
+/path/to/detected/python -m pip install --isolated torch==VERSION \
   --index-url https://download.pytorch.org/whl/VARIANT
 
-uv pip install torch==VERSION \
+uv pip install --python /path/to/detected/python torch==VERSION \
   --default-index https://download.pytorch.org/whl/VARIANT
 
-uv add torch==VERSION \
+uv add --python /path/to/detected/python torch==VERSION \
   --index pytorch=https://download.pytorch.org/whl/VARIANT
 ```
 
-With `--python /path/to/python`, the corresponding pinned forms are emitted:
+When an existing `uv pip` target is established without ambiguity, the shorter environment-relative form is emitted:
 
 ```bash
-/path/to/python -m pip install --isolated torch==VERSION \
-  --index-url https://download.pytorch.org/whl/VARIANT
-
-uv pip install --python /path/to/python torch==VERSION \
+uv pip install torch==VERSION \
   --default-index https://download.pytorch.org/whl/VARIANT
-
-uv add --python /path/to/python torch==VERSION \
-  --index pytorch=https://download.pytorch.org/whl/VARIANT
 ```
 
 ## What the states mean
 
 The JSON report retains independent results for wheel existence, Python/ABI, platform/glibc, GPU architecture, NVIDIA driver, and runtime verification. The human-facing aggregate is derived from those checks:
 
-- `verified`: `torch-check verify` executed the installed build successfully on every selected logical GPU in this invocation.
+- `verified`: `torch-check verify` executed the installed build successfully on every selected logical GPU in this invocation; when NVIDIA GPUs are detected and `--gpu` is omitted, every detected GPU is selected by UUID, so a CPU-only build does not pass as GPU-verified.
 - `direct-compatible`: all static checks pass and the driver meets the normal minimum for the wheel's exact CUDA release.
 - `minor-compatible`: all static checks pass, but the result relies on NVIDIA's same-major CUDA minor-version compatibility.
 - `unverified`: no known condition rules the wheel out, but trustworthy evidence is missing (most often static GPU architecture coverage).
@@ -123,7 +125,7 @@ The local CUDA Toolkit is displayed because it matters for source builds and ext
 
 The wheel list is discovered from `https://download.pytorch.org/whl/` and the simple indexes below it. Links are accepted only over HTTPS from the exact PyTorch download host allowlist. A recommendation is produced only from a complete metadata snapshot; a partially fetched set is rejected.
 
-Snapshots are cached for 24 hours in the platform cache directory (normally `$XDG_CACHE_HOME/torch-check/` or `~/.cache/torch-check/` on Linux). Cache files are keyed by the requested package set, so a torch-only refresh cannot destroy an offline-capable torchvision/torchaudio snapshot. Writes are locked and atomic.
+Snapshots are cached for 24 hours in the platform cache directory (normally `$XDG_CACHE_HOME/torch-check/` or `~/.cache/torch-check/` on Linux). Cache files are keyed by the requested package set, so a torch-only refresh cannot destroy an offline-capable torchvision/torchaudio snapshot. Writes are locked, atomic, and monotonic: a slower concurrent refresh cannot replace an equally recent or newer snapshot.
 
 - `--refresh` bypasses a fresh cache.
 - `--offline` performs no network request and requires an existing complete cache.
@@ -181,6 +183,8 @@ Static recommendations never receive the `verified` state.
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
 cargo test --workspace --all-features --locked
+shellcheck scripts/install.sh scripts/tests/test_install.sh
+scripts/tests/test_install.sh
 python3 -m unittest discover -s scripts/tests -v
 python3 scripts/check_reviewed_metadata.py
 cargo package --locked
