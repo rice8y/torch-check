@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy,rustfmt
+          rustup default stable
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Lint
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Validate reviewed compatibility metadata
+        run: |
+          python3 -m unittest discover -s scripts/tests -v
+          python3 scripts/check_reviewed_metadata.py
+      - name: Test
+        run: cargo test --workspace --all-features --locked
+      - name: Documentation
+        run: RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps --locked
+      - name: Package smoke test
+        run: cargo package --locked
+
+  msrv:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install declared minimum Rust
+        run: |
+          rustup toolchain install 1.85.0 --profile minimal
+          rustup default 1.85.0
+      - name: Check minimum Rust version
+        run: cargo check --workspace --all-targets --locked
+
+  musl:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install static Linux toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup target add x86_64-unknown-linux-musl
+          sudo apt-get update
+          sudo apt-get install --yes musl-tools
+      - name: Build static Linux x86_64 binary
+        run: cargo build --locked --target x86_64-unknown-linux-musl
+      - name: Smoke-test generated binary
+        run: |
+          set +e
+          report=$(target/x86_64-unknown-linux-musl/debug/torch-check inspect --format json)
+          status=$?
+          set -e
+          test "$status" -le 1
+          jq -e '.schema_version == 1' <<< "$report"
+          jq -e '[.. | objects | .code?] | all(. != "unsupported_libc")' <<< "$report"
+
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install RustSec audit tool
+        run: cargo install cargo-audit --version 0.22.2 --locked
+      - name: Audit lockfile
+        run: cargo audit --deny warnings
