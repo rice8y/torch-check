@@ -2105,6 +2105,7 @@ MALFORMED='unterminated
     #[cfg(unix)]
     #[test]
     fn command_runner_enforces_timeout() {
+        let _guard = crate::process::lock_subprocess_tests();
         let options = RunCommandOptions {
             timeout: Duration::from_millis(20),
             max_stdout_bytes: 1024,
@@ -2117,6 +2118,7 @@ MALFORMED='unterminated
     #[cfg(unix)]
     #[test]
     fn command_runner_reports_output_limit() {
+        let _guard = crate::process::lock_subprocess_tests();
         let options = RunCommandOptions {
             timeout: Duration::from_secs(2),
             max_stdout_bytes: 4,
@@ -2136,6 +2138,7 @@ MALFORMED='unterminated
     #[cfg(unix)]
     #[test]
     fn command_runner_does_not_wait_for_descendants_holding_pipes() {
+        let _guard = crate::process::lock_subprocess_tests();
         let options = RunCommandOptions {
             timeout: Duration::from_secs(2),
             max_stdout_bytes: 1024,

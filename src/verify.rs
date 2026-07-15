@@ -1214,6 +1214,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn subprocess_parses_successful_probe() {
+        let _guard = crate::process::lock_subprocess_tests();
         let line = protocol_line(json!({
             "protocol_version": 1,
             "ok": true,
@@ -1247,6 +1248,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn explicit_visibility_override_is_passed_by_uuid() {
+        let _guard = crate::process::lock_subprocess_tests();
         let line = protocol_line(json!({
             "protocol_version": 1,
             "ok": true,
@@ -1282,6 +1284,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn structured_import_failure_is_preserved() {
+        let _guard = crate::process::lock_subprocess_tests();
         let line = protocol_line(json!({
             "protocol_version": 1,
             "ok": false,
@@ -1314,6 +1317,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn invalid_json_is_a_structured_failure() {
+        let _guard = crate::process::lock_subprocess_tests();
         let (_directory, executable) =
             fake_python("printf '%s\\n' 'TORCH_CHECK_VERIFY_JSON:{not-json}'");
         let mut options = options();
@@ -1334,6 +1338,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn timeout_terminates_the_subprocess() {
+        let _guard = crate::process::lock_subprocess_tests();
         let (_directory, executable) = fake_python("exec sleep 2");
         let mut options = options();
         options.python_executable = executable;
@@ -1342,12 +1347,17 @@ mod tests {
         let report = verify_installed(&options);
 
         assert_eq!(report.status, CompatibilityStatus::Incompatible);
-        assert_eq!(report.checks[0].name, "subprocess_timeout");
+        assert_eq!(
+            report.checks[0].name, "subprocess_timeout",
+            "verification failed: {:?}",
+            report.error
+        );
     }
 
     #[cfg(unix)]
     #[test]
     fn combined_output_limit_terminates_the_subprocess() {
+        let _guard = crate::process::lock_subprocess_tests();
         let (_directory, executable) = fake_python(
             "i=0\nwhile [ \"$i\" -lt 1000 ]; do\n  printf 'xxxxxxxxxxxxxxxx'\n  i=$((i + 1))\ndone",
         );
@@ -1364,6 +1374,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn completed_probe_does_not_wait_for_descendants_holding_pipes() {
+        let _guard = crate::process::lock_subprocess_tests();
         let (_directory, executable) = fake_python("sleep 5 &\nexit 0");
         let mut options = options();
         options.python_executable = executable;

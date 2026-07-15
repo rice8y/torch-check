@@ -2,6 +2,17 @@
 
 use std::process::{Child, Command};
 
+#[cfg(all(test, unix))]
+static SUBPROCESS_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// Serializes unit tests that create and terminate isolated process groups.
+#[cfg(all(test, unix))]
+pub(crate) fn lock_subprocess_tests() -> std::sync::MutexGuard<'static, ()> {
+    SUBPROCESS_TEST_LOCK
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
 /// Starts a child in its own process group on Unix so inherited pipe handles
 /// cannot outlive a timeout indefinitely.
 pub(crate) fn isolate_process_tree(command: &mut Command) {
