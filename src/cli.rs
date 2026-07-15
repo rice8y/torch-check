@@ -158,6 +158,7 @@ fn process_exit_code(code: ExitCode) -> ProcessExitCode {
 #[derive(Debug, Parser)]
 #[command(
     name = "torch-check",
+    bin_name = "torch-check",
     version,
     about = "Find a safe PyTorch wheel for a Linux/NVIDIA/Python environment",
     long_about = "Inspect a Python/NVIDIA environment, enumerate wheels that actually exist on the official PyTorch indexes, and recommend only reviewed configurations whose driver, ABI, platform, and GPU compatibility can be established statically."
@@ -2560,6 +2561,16 @@ mod tests {
     #[test]
     fn cli_contract_is_constructible() {
         Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn help_uses_the_canonical_binary_name_on_windows() {
+        let help = Cli::try_parse_from(["torch-check.exe", "--help"])
+            .expect_err("help is returned as a clap display error")
+            .to_string();
+
+        assert!(help.contains("Usage: torch-check [OPTIONS] [COMMAND]"));
+        assert!(!help.contains("torch-check.exe"));
     }
 
     #[test]
