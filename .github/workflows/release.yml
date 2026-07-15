@@ -111,6 +111,8 @@ jobs:
           sudo apt-get install --yes musl-tools
       - name: Install third-party license generator
         run: cargo install cargo-about --version 0.9.1 --locked --features cli
+      - name: Fetch locked dependency metadata for license generation
+        run: cargo fetch --locked
       - name: Test native target
         run: cargo test --workspace --all-features --locked --target "$TARGET"
       - name: Build release binary
