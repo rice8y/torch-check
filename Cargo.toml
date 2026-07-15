@@ -67,7 +67,7 @@ rustix = { version = "1.1", features = ["process"] }
 [dev-dependencies]
 assert_cmd = "2.0"
 insta = { version = "1.43", features = ["json", "redactions"] }
-jsonschema = "0.33"
+jsonschema = "0.47"
 predicates = "3.1"
 proptest = "1.7"
 
