@@ -1,0 +1,1180 @@
+{
+  "schema_version": 2,
+  "authority": "observation_only",
+  "sources": [
+    {
+      "kind": "release_compatibility_matrix",
+      "url": "https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix"
+    },
+    {
+      "kind": "cuda_architecture_matrix",
+      "url": "https://github.com/pytorch/pytorch/blob/main/RELEASE.md#pytorch-cuda-support-matrix"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.6",
+      "tag": "v2.6.0",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.6.0/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.7",
+      "tag": "v2.7.0",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.7.0/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.7",
+      "tag": "v2.7.1",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.7.1/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.8",
+      "tag": "v2.8.0",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.8.0/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.9",
+      "tag": "v2.9.0",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.9.0/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.9",
+      "tag": "v2.9.1",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.9.1/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.10",
+      "tag": "v2.10.0",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.10.0/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "linux_x86_64_wheel_cuda_architectures",
+      "series": "2.11",
+      "tag": "v2.11.0",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.11.0/.ci/manywheel/build_cuda.sh"
+    },
+    {
+      "kind": "nvidia_minor_version_compatibility",
+      "url": "https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html"
+    },
+    {
+      "kind": "nvidia_toolkit_driver_versions",
+      "url": "https://docs.nvidia.com/cuda/archive/13.2.0/cuda-toolkit-release-notes/index.html#cuda-driver"
+    }
+  ],
+  "release_compatibility": [
+    {
+      "series": "2.13",
+      "python": ">=3.10, <=(3.15, 3.15t experimental)",
+      "cxx_standard": "C++20",
+      "stable_cuda": [
+        "12.6",
+        "13.0"
+      ],
+      "experimental_cuda": [
+        "13.2"
+      ],
+      "stable_rocm": "7.2"
+    },
+    {
+      "series": "2.12",
+      "python": ">=3.10, <=(3.14, 3.14t experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "12.6",
+        "13.0"
+      ],
+      "experimental_cuda": [
+        "13.2"
+      ],
+      "stable_rocm": "7.2"
+    },
+    {
+      "series": "2.11",
+      "python": ">=3.10, <=(3.14, 3.14t experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "12.6",
+        "12.8",
+        "13.0"
+      ],
+      "experimental_cuda": [],
+      "stable_rocm": "7.2"
+    },
+    {
+      "series": "2.10",
+      "python": ">=3.10, <=(3.14, 3.14t experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "12.6",
+        "12.8"
+      ],
+      "experimental_cuda": [
+        "13.0"
+      ],
+      "stable_rocm": "7.1"
+    },
+    {
+      "series": "2.9",
+      "python": ">=3.10, <=(3.14, 3.14t experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "12.6",
+        "12.8"
+      ],
+      "experimental_cuda": [
+        "13.0"
+      ],
+      "stable_rocm": "6.4"
+    },
+    {
+      "series": "2.8",
+      "python": ">=3.9, <=3.13, (3.13t experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "12.6",
+        "12.8"
+      ],
+      "experimental_cuda": [
+        "12.9"
+      ],
+      "stable_rocm": "6.4"
+    },
+    {
+      "series": "2.7",
+      "python": ">=3.9, <=3.13, (3.13t experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "11.8",
+        "12.6"
+      ],
+      "experimental_cuda": [
+        "12.8"
+      ],
+      "stable_rocm": "6.3"
+    },
+    {
+      "series": "2.6",
+      "python": ">=3.9, <=3.13, (3.13t experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "11.8",
+        "12.4"
+      ],
+      "experimental_cuda": [
+        "12.6"
+      ],
+      "stable_rocm": "6.2.4"
+    },
+    {
+      "series": "2.5",
+      "python": ">=3.9, <=3.12, (3.13 experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "11.8",
+        "12.1",
+        "12.4"
+      ],
+      "experimental_cuda": [],
+      "stable_rocm": "6.2"
+    },
+    {
+      "series": "2.4",
+      "python": ">=3.8, <=3.12",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "11.8",
+        "12.1"
+      ],
+      "experimental_cuda": [
+        "12.4"
+      ],
+      "stable_rocm": "6.1"
+    },
+    {
+      "series": "2.3",
+      "python": ">=3.8, <=3.11, (3.12 experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "11.8"
+      ],
+      "experimental_cuda": [
+        "12.1"
+      ],
+      "stable_rocm": "6.0"
+    },
+    {
+      "series": "2.2",
+      "python": ">=3.8, <=3.11, (3.12 experimental)",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "11.8"
+      ],
+      "experimental_cuda": [
+        "12.1"
+      ],
+      "stable_rocm": "5.7"
+    },
+    {
+      "series": "2.1",
+      "python": ">=3.8, <=3.11",
+      "cxx_standard": "C++17",
+      "stable_cuda": [
+        "11.8"
+      ],
+      "experimental_cuda": [
+        "12.1"
+      ],
+      "stable_rocm": "5.6"
+    },
+    {
+      "series": "2.0",
+      "python": ">=3.8, <=3.11",
+      "cxx_standard": "C++14",
+      "stable_cuda": [
+        "11.7"
+      ],
+      "experimental_cuda": [
+        "11.8"
+      ],
+      "stable_rocm": "5.4"
+    },
+    {
+      "series": "1.13",
+      "python": ">=3.7, <=3.10",
+      "cxx_standard": "C++14",
+      "stable_cuda": [
+        "11.6"
+      ],
+      "experimental_cuda": [
+        "11.7"
+      ],
+      "stable_rocm": "5.2"
+    },
+    {
+      "series": "1.12",
+      "python": ">=3.7, <=3.10",
+      "cxx_standard": "C++14",
+      "stable_cuda": [
+        "11.3"
+      ],
+      "experimental_cuda": [
+        "11.6"
+      ],
+      "stable_rocm": "5.0"
+    }
+  ],
+  "linux_x86_64_and_windows_cuda_architectures": [
+    {
+      "cuda": "12.6.3",
+      "compute_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capabilities": [],
+      "notes": ""
+    },
+    {
+      "cuda": "13.0.2",
+      "compute_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capabilities": [
+        "12.0"
+      ],
+      "notes": "+PTX available on linux builds only"
+    },
+    {
+      "cuda": "13.2.1",
+      "compute_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capabilities": [
+        "12.0"
+      ],
+      "notes": "+PTX available on linux builds only"
+    }
+  ],
+  "pytorch_tagged_cuda_builds": [
+    {
+      "series": "2.11",
+      "tag": "v2.11.0",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.11.0/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "1694f3d664f5a7d98997d053f27394863bcd82db089b452ba9238d4c7f1316d5",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.8",
+          "variant": "cu128",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.9",
+          "variant": "cu129",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        },
+        {
+          "cuda": "13.0",
+          "variant": "cu130",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": []
+        }
+      ]
+    },
+    {
+      "series": "2.10",
+      "tag": "v2.10.0",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.10.0/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "1c926666e98daaf89c6ed16a79cb07a3ea96dba61f367cb5614323117033daee",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.8",
+          "variant": "cu128",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.9",
+          "variant": "cu129",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        },
+        {
+          "cuda": "13.0",
+          "variant": "cu130",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        }
+      ]
+    },
+    {
+      "series": "2.9",
+      "tag": "v2.9.0",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.9.0/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "666a11af21d58b26895cb822feb8b86316e7ad26bd051327eb836e8b225c1045",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.8",
+          "variant": "cu128",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.9",
+          "variant": "cu129",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        },
+        {
+          "cuda": "13.0",
+          "variant": "cu130",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        }
+      ]
+    },
+    {
+      "series": "2.9",
+      "tag": "v2.9.1",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.9.1/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "b0460eef86bfd7fcb275d83d1280c585bffecc7375da43000f6eb87d2beca0bf",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.8",
+          "variant": "cu128",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.9",
+          "variant": "cu129",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        },
+        {
+          "cuda": "13.0",
+          "variant": "cu130",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        }
+      ]
+    },
+    {
+      "series": "2.8",
+      "tag": "v2.8.0",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.8.0/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "47eb053afd51920386226239edc57f9edad0c4f3b8db3401360ecd1086e6ba39",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.8",
+          "variant": "cu128",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.9",
+          "variant": "cu129",
+          "compute_capabilities": [
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        }
+      ]
+    },
+    {
+      "series": "2.7",
+      "tag": "v2.7.0",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.7.0/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "3554432f244ad4a46bed6683e216920122eda117bcdffbb25d4a4155c4d39f6e",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "11.8",
+          "variant": "cu118",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "3.7",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.4",
+          "variant": "cu124",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.8",
+          "variant": "cu128",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        }
+      ]
+    },
+    {
+      "series": "2.7",
+      "tag": "v2.7.1",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.7.1/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "3554432f244ad4a46bed6683e216920122eda117bcdffbb25d4a4155c4d39f6e",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "11.8",
+          "variant": "cu118",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "3.7",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.4",
+          "variant": "cu124",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.8",
+          "variant": "cu128",
+          "compute_capabilities": [
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0",
+            "10.0",
+            "12.0"
+          ],
+          "ptx_capabilities": [
+            "12.0"
+          ]
+        }
+      ]
+    },
+    {
+      "series": "2.6",
+      "tag": "v2.6.0",
+      "source_url": "https://github.com/pytorch/pytorch/blob/v2.6.0/.ci/manywheel/build_cuda.sh",
+      "source_sha256": "a092e276fcf426e06d719beb500f0c503b8d7a73906d842f937f04ba7c017008",
+      "platform": "linux_x86_64",
+      "package_type": "wheel",
+      "architectures": [
+        {
+          "cuda": "11.8",
+          "variant": "cu118",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "3.7",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.1",
+          "variant": "cu121",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.4",
+          "variant": "cu124",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        },
+        {
+          "cuda": "12.6",
+          "variant": "cu126",
+          "compute_capabilities": [
+            "5.0",
+            "6.0",
+            "7.0",
+            "7.5",
+            "8.0",
+            "8.6",
+            "9.0"
+          ],
+          "ptx_capabilities": []
+        }
+      ]
+    }
+  ],
+  "nvidia_minor_version_compatibility": {
+    "families": [
+      {
+        "cuda_major": 13,
+        "minimum_driver_branch": "580",
+        "upper_exclusive": null
+      },
+      {
+        "cuda_major": 12,
+        "minimum_driver_branch": "525",
+        "upper_exclusive": "580"
+      },
+      {
+        "cuda_major": 11,
+        "minimum_driver_branch": "450",
+        "upper_exclusive": "525"
+      }
+    ],
+    "cuda_11_family_exception": {
+      "linux_min_driver": "450.80.02",
+      "windows_min_driver": "452.39"
+    }
+  },
+  "nvidia_toolkit_driver_versions": [
+    {
+      "toolkit_release": "CUDA 13.2 GA",
+      "toolkit_version": "13.2",
+      "linux_min_driver": "595.45.04",
+      "windows_min_driver": null
+    },
+    {
+      "toolkit_release": "CUDA 13.1 Update 1",
+      "toolkit_version": "13.1",
+      "linux_min_driver": "590.48.01",
+      "windows_min_driver": null
+    },
+    {
+      "toolkit_release": "CUDA 13.1 GA",
+      "toolkit_version": "13.1",
+      "linux_min_driver": "590.44.01",
+      "windows_min_driver": null
+    },
+    {
+      "toolkit_release": "CUDA 13.0 Update 2",
+      "toolkit_version": "13.0",
+      "linux_min_driver": "580.95.05",
+      "windows_min_driver": null
+    },
+    {
+      "toolkit_release": "CUDA 13.0 Update 1",
+      "toolkit_version": "13.0",
+      "linux_min_driver": "580.82.07",
+      "windows_min_driver": null
+    },
+    {
+      "toolkit_release": "CUDA 13.0 GA",
+      "toolkit_version": "13.0",
+      "linux_min_driver": "580.65.06",
+      "windows_min_driver": null
+    },
+    {
+      "toolkit_release": "CUDA 12.9 Update 1",
+      "toolkit_version": "12.9",
+      "linux_min_driver": "575.57.08",
+      "windows_min_driver": "576.57"
+    },
+    {
+      "toolkit_release": "CUDA 12.9 GA",
+      "toolkit_version": "12.9",
+      "linux_min_driver": "575.51.03",
+      "windows_min_driver": "576.02"
+    },
+    {
+      "toolkit_release": "CUDA 12.8 Update 1",
+      "toolkit_version": "12.8",
+      "linux_min_driver": "570.124.06",
+      "windows_min_driver": "572.61"
+    },
+    {
+      "toolkit_release": "CUDA 12.8 GA",
+      "toolkit_version": "12.8",
+      "linux_min_driver": "570.26",
+      "windows_min_driver": "570.65"
+    },
+    {
+      "toolkit_release": "CUDA 12.6 Update 3",
+      "toolkit_version": "12.6",
+      "linux_min_driver": "560.35.05",
+      "windows_min_driver": "561.17"
+    },
+    {
+      "toolkit_release": "CUDA 12.6 Update 2",
+      "toolkit_version": "12.6",
+      "linux_min_driver": "560.35.03",
+      "windows_min_driver": "560.94"
+    },
+    {
+      "toolkit_release": "CUDA 12.6 Update 1",
+      "toolkit_version": "12.6",
+      "linux_min_driver": "560.35.03",
+      "windows_min_driver": "560.94"
+    },
+    {
+      "toolkit_release": "CUDA 12.6 GA",
+      "toolkit_version": "12.6",
+      "linux_min_driver": "560.28.03",
+      "windows_min_driver": "560.76"
+    },
+    {
+      "toolkit_release": "CUDA 12.5 Update 1",
+      "toolkit_version": "12.5",
+      "linux_min_driver": "555.42.06",
+      "windows_min_driver": "555.85"
+    },
+    {
+      "toolkit_release": "CUDA 12.5 GA",
+      "toolkit_version": "12.5",
+      "linux_min_driver": "555.42.02",
+      "windows_min_driver": "555.85"
+    },
+    {
+      "toolkit_release": "CUDA 12.4 Update 1",
+      "toolkit_version": "12.4",
+      "linux_min_driver": "550.54.15",
+      "windows_min_driver": "551.78"
+    },
+    {
+      "toolkit_release": "CUDA 12.4 GA",
+      "toolkit_version": "12.4",
+      "linux_min_driver": "550.54.14",
+      "windows_min_driver": "551.61"
+    },
+    {
+      "toolkit_release": "CUDA 12.3 Update 1",
+      "toolkit_version": "12.3",
+      "linux_min_driver": "545.23.08",
+      "windows_min_driver": "546.12"
+    },
+    {
+      "toolkit_release": "CUDA 12.3 GA",
+      "toolkit_version": "12.3",
+      "linux_min_driver": "545.23.06",
+      "windows_min_driver": "545.84"
+    },
+    {
+      "toolkit_release": "CUDA 12.2 Update 2",
+      "toolkit_version": "12.2",
+      "linux_min_driver": "535.104.05",
+      "windows_min_driver": "537.13"
+    },
+    {
+      "toolkit_release": "CUDA 12.2 Update 1",
+      "toolkit_version": "12.2",
+      "linux_min_driver": "535.86.09",
+      "windows_min_driver": "536.67"
+    },
+    {
+      "toolkit_release": "CUDA 12.2 GA",
+      "toolkit_version": "12.2",
+      "linux_min_driver": "535.54.03",
+      "windows_min_driver": "536.25"
+    },
+    {
+      "toolkit_release": "CUDA 12.1 Update 1",
+      "toolkit_version": "12.1",
+      "linux_min_driver": "530.30.02",
+      "windows_min_driver": "531.14"
+    },
+    {
+      "toolkit_release": "CUDA 12.1 GA",
+      "toolkit_version": "12.1",
+      "linux_min_driver": "530.30.02",
+      "windows_min_driver": "531.14"
+    },
+    {
+      "toolkit_release": "CUDA 12.0 Update 1",
+      "toolkit_version": "12.0",
+      "linux_min_driver": "525.85.12",
+      "windows_min_driver": "528.33"
+    },
+    {
+      "toolkit_release": "CUDA 12.0 GA",
+      "toolkit_version": "12.0",
+      "linux_min_driver": "525.60.13",
+      "windows_min_driver": "527.41"
+    },
+    {
+      "toolkit_release": "CUDA 11.8 GA",
+      "toolkit_version": "11.8",
+      "linux_min_driver": "520.61.05",
+      "windows_min_driver": "520.06"
+    },
+    {
+      "toolkit_release": "CUDA 11.7 Update 1",
+      "toolkit_version": "11.7",
+      "linux_min_driver": "515.48.07",
+      "windows_min_driver": "516.31"
+    },
+    {
+      "toolkit_release": "CUDA 11.7 GA",
+      "toolkit_version": "11.7",
+      "linux_min_driver": "515.43.04",
+      "windows_min_driver": "516.01"
+    },
+    {
+      "toolkit_release": "CUDA 11.6 Update 2",
+      "toolkit_version": "11.6",
+      "linux_min_driver": "510.47.03",
+      "windows_min_driver": "511.65"
+    },
+    {
+      "toolkit_release": "CUDA 11.6 Update 1",
+      "toolkit_version": "11.6",
+      "linux_min_driver": "510.47.03",
+      "windows_min_driver": "511.65"
+    },
+    {
+      "toolkit_release": "CUDA 11.6 GA",
+      "toolkit_version": "11.6",
+      "linux_min_driver": "510.39.01",
+      "windows_min_driver": "511.23"
+    },
+    {
+      "toolkit_release": "CUDA 11.5 Update 2",
+      "toolkit_version": "11.5",
+      "linux_min_driver": "495.29.05",
+      "windows_min_driver": "496.13"
+    },
+    {
+      "toolkit_release": "CUDA 11.5 Update 1",
+      "toolkit_version": "11.5",
+      "linux_min_driver": "495.29.05",
+      "windows_min_driver": "496.13"
+    },
+    {
+      "toolkit_release": "CUDA 11.5 GA",
+      "toolkit_version": "11.5",
+      "linux_min_driver": "495.29.05",
+      "windows_min_driver": "496.04"
+    },
+    {
+      "toolkit_release": "CUDA 11.4 Update 4",
+      "toolkit_version": "11.4",
+      "linux_min_driver": "470.82.01",
+      "windows_min_driver": "472.50"
+    },
+    {
+      "toolkit_release": "CUDA 11.4 Update 3",
+      "toolkit_version": "11.4",
+      "linux_min_driver": "470.82.01",
+      "windows_min_driver": "472.50"
+    },
+    {
+      "toolkit_release": "CUDA 11.4 Update 2",
+      "toolkit_version": "11.4",
+      "linux_min_driver": "470.57.02",
+      "windows_min_driver": "471.41"
+    },
+    {
+      "toolkit_release": "CUDA 11.4 Update 1",
+      "toolkit_version": "11.4",
+      "linux_min_driver": "470.57.02",
+      "windows_min_driver": "471.41"
+    },
+    {
+      "toolkit_release": "CUDA 11.4.0 GA",
+      "toolkit_version": "11.4.0",
+      "linux_min_driver": "470.42.01",
+      "windows_min_driver": "471.11"
+    },
+    {
+      "toolkit_release": "CUDA 11.3.1 Update 1",
+      "toolkit_version": "11.3.1",
+      "linux_min_driver": "465.19.01",
+      "windows_min_driver": "465.89"
+    },
+    {
+      "toolkit_release": "CUDA 11.3.0 GA",
+      "toolkit_version": "11.3.0",
+      "linux_min_driver": "465.19.01",
+      "windows_min_driver": "465.89"
+    },
+    {
+      "toolkit_release": "CUDA 11.2.2 Update 2",
+      "toolkit_version": "11.2.2",
+      "linux_min_driver": "460.32.03",
+      "windows_min_driver": "461.33"
+    },
+    {
+      "toolkit_release": "CUDA 11.2.1 Update 1",
+      "toolkit_version": "11.2.1",
+      "linux_min_driver": "460.32.03",
+      "windows_min_driver": "461.09"
+    },
+    {
+      "toolkit_release": "CUDA 11.2.0 GA",
+      "toolkit_version": "11.2.0",
+      "linux_min_driver": "460.27.03",
+      "windows_min_driver": "460.82"
+    },
+    {
+      "toolkit_release": "CUDA 11.1.1 Update 1",
+      "toolkit_version": "11.1.1",
+      "linux_min_driver": "455.32",
+      "windows_min_driver": "456.81"
+    },
+    {
+      "toolkit_release": "CUDA 11.1 GA",
+      "toolkit_version": "11.1",
+      "linux_min_driver": "455.23",
+      "windows_min_driver": "456.38"
+    },
+    {
+      "toolkit_release": "CUDA 11.0.3 Update 1",
+      "toolkit_version": "11.0.3",
+      "linux_min_driver": "450.51.06",
+      "windows_min_driver": "451.82"
+    },
+    {
+      "toolkit_release": "CUDA 11.0.2 GA",
+      "toolkit_version": "11.0.2",
+      "linux_min_driver": "450.51.05",
+      "windows_min_driver": "451.48"
+    },
+    {
+      "toolkit_release": "CUDA 11.0.1 RC",
+      "toolkit_version": "11.0.1",
+      "linux_min_driver": "450.36.06",
+      "windows_min_driver": "451.22"
+    }
+  ]
+}

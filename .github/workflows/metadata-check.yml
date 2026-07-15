@@ -1,0 +1,79 @@
+name: Upstream metadata check
+
+on:
+  schedule:
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream-metadata
+  cancel-in-progress: false
+
+jobs:
+  observe-official-metadata:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Test the bounded upstream parser
+        run: python3 -m unittest discover -s scripts/tests -v
+      - name: Observe official PyTorch and NVIDIA metadata
+        run: python3 scripts/observe_upstream_metadata.py --output data/upstream-observed.json
+      - name: Detect observation drift
+        id: drift
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain -- data/upstream-observed.json)" ]]; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            digest=$(sha256sum data/upstream-observed.json | cut -d ' ' -f 1)
+            echo "branch=automation/upstream-metadata-${digest:0:12}" >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Push the review-only observation branch
+        if: steps.drift.outputs.changed == 'true'
+        env:
+          BRANCH: ${{ steps.drift.outputs.branch }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null; then
+            echo "The content-addressed review branch already exists; leaving maintainer edits intact."
+          else
+            git switch --create "$BRANCH"
+            git add data/upstream-observed.json
+            git commit --message 'chore: observe upstream compatibility metadata'
+            git push origin "HEAD:refs/heads/$BRANCH"
+          fi
+      - name: Open a human-review pull request
+        if: steps.drift.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.drift.outputs.branch }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [[ "$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')" = '0' ]]; then
+            gh pr create \
+              --head "$BRANCH" \
+              --base "$BASE_BRANCH" \
+              --title 'chore: observe upstream compatibility metadata' \
+              --body 'This automated PR updates only the bounded observation of official PyTorch and NVIDIA compatibility metadata. It does not modify reviewed compatibility rules. A maintainer must compare this diff with the linked official sources and update data/cuda-driver-rules.json or data/pytorch-release-rules.json when needed. CI intentionally requires the reviewed rules to agree with this observation before merge.'
+          fi
+
+  live-index:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Build
+        run: cargo build --release --locked
+      - name: Check the official index and reviewed-data age
+        run: scripts/check-upstream-metadata.sh
