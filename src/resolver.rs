@@ -59,6 +59,8 @@ pub struct ResolverOptions {
     pub include_prerelease: bool,
     /// Installer command style.
     pub installer: Installer,
+    /// Include the detected Python executable in the generated install command.
+    pub pin_python_in_install_command: bool,
     /// Companion distributions to pin to the matching release.
     pub companions: BTreeSet<CompanionPackage>,
 }
@@ -69,6 +71,7 @@ impl Default for ResolverOptions {
             torch_version: None,
             include_prerelease: false,
             installer: Installer::Pip,
+            pin_python_in_install_command: false,
             companions: BTreeSet::new(),
         }
     }
@@ -1334,7 +1337,11 @@ fn build_install_command(
         .python
         .as_ref()
         .ok_or(ResolverError::PythonRequired)?;
-    let python_executable = path_to_string(&python.executable)?;
+    let python_executable = if options.pin_python_in_install_command {
+        Some(path_to_string(&python.executable)?)
+    } else {
+        None
+    };
     let index_url = format!("https://download.pytorch.org/whl/{}", candidate.variant);
     let mut requirements = vec![format!("torch=={}", candidate.torch_version)];
     for companion in &options.companions {
@@ -1361,9 +1368,9 @@ fn build_install_command(
         }
     }
 
-    let (program, mut args) = match options.installer {
-        Installer::Pip => (
-            python_executable.clone(),
+    let (program, mut args) = match (options.installer, python_executable) {
+        (Installer::Pip, Some(python_executable)) => (
+            python_executable,
             vec![
                 "-m".to_owned(),
                 "pip".to_owned(),
@@ -1371,33 +1378,37 @@ fn build_install_command(
                 "--isolated".to_owned(),
             ],
         ),
-        Installer::Uv => (
+        (Installer::Pip, None) => ("pip".to_owned(), vec!["install".to_owned()]),
+        (Installer::Uv, Some(python_executable)) => (
             "uv".to_owned(),
             vec![
                 "pip".to_owned(),
                 "install".to_owned(),
                 "--python".to_owned(),
-                python_executable.clone(),
-                "--default-index".to_owned(),
-                index_url.clone(),
-            ],
-        ),
-        Installer::UvAdd => (
-            "uv".to_owned(),
-            vec![
-                "add".to_owned(),
-                "--python".to_owned(),
                 python_executable,
-                "--index".to_owned(),
-                format!("pytorch={index_url}"),
             ],
         ),
+        (Installer::Uv, None) => (
+            "uv".to_owned(),
+            vec!["pip".to_owned(), "install".to_owned()],
+        ),
+        (Installer::UvAdd, Some(python_executable)) => (
+            "uv".to_owned(),
+            vec!["add".to_owned(), "--python".to_owned(), python_executable],
+        ),
+        (Installer::UvAdd, None) => ("uv".to_owned(), vec!["add".to_owned()]),
     };
+    args.extend(requirements);
     if options.installer == Installer::Pip {
         args.push("--index-url".to_owned());
         args.push(index_url);
+    } else if options.installer == Installer::Uv {
+        args.push("--default-index".to_owned());
+        args.push(index_url);
+    } else {
+        args.push("--index".to_owned());
+        args.push(format!("pytorch={index_url}"));
     }
-    args.extend(requirements);
     let display = shell_display(&program, &args);
     Ok(CommandSpec {
         program,
@@ -1654,10 +1665,8 @@ mod tests {
     }
 
     #[test]
-    fn generated_pip_command_targets_selected_python_and_is_shell_quoted() {
-        let mut env = environment("580.65.06", "13.0");
-        env.python.as_mut().expect("python").executable =
-            PathBuf::from("/tmp/Python Env/bin/python");
+    fn generated_pip_command_uses_active_environment_by_default() {
+        let env = environment("580.65.06", "13.0");
         let candidate = Candidate {
             torch_version: "2.13.0".to_owned(),
             variant: "cu130".parse().expect("variant"),
@@ -1680,6 +1689,52 @@ mod tests {
             &snapshot(vec![]),
             &candidate,
             &ResolverOptions::default(),
+            &RuleSet::load().expect("rules"),
+        )
+        .expect("command");
+        assert_eq!(command.program, "pip");
+        assert_eq!(
+            command.args,
+            [
+                "install",
+                "torch==2.13.0",
+                "--index-url",
+                "https://download.pytorch.org/whl/cu130"
+            ]
+        );
+    }
+
+    #[test]
+    fn generated_pip_command_targets_selected_python_when_requested_and_is_shell_quoted() {
+        let mut env = environment("580.65.06", "13.0");
+        env.python.as_mut().expect("python").executable =
+            PathBuf::from("/tmp/Python Env/bin/python");
+        let options = ResolverOptions {
+            pin_python_in_install_command: true,
+            ..ResolverOptions::default()
+        };
+        let candidate = Candidate {
+            torch_version: "2.13.0".to_owned(),
+            variant: "cu130".parse().expect("variant"),
+            compatibility: CompatibilityStatus::DirectCompatible,
+            checks: CompatibilityChecks {
+                wheel: CompatibilityCheck::new(CheckStatus::Pass, Vec::new()),
+                python: CompatibilityCheck::new(CheckStatus::Pass, Vec::new()),
+                platform: CompatibilityCheck::new(CheckStatus::Pass, Vec::new()),
+                gpu_architecture: CompatibilityCheck::new(CheckStatus::Pass, Vec::new()),
+                driver: CompatibilityCheck::new(CheckStatus::Pass, Vec::new()),
+                runtime: CompatibilityCheck::new(CheckStatus::Unknown, Vec::new()),
+            },
+            wheel: None,
+            stable: true,
+            official_preference: Some(1),
+            warnings: Vec::new(),
+        };
+        let command = build_install_command(
+            &env,
+            &snapshot(vec![]),
+            &candidate,
+            &options,
             &RuleSet::load().expect("rules"),
         )
         .expect("command");

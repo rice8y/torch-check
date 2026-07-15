@@ -498,6 +498,7 @@ async fn command_recommend(cli: &Cli, args: &RecommendArgs) -> ExitCode {
         torch_version: args.torch_version.clone(),
         include_prerelease: args.prerelease,
         installer: args.installer.into(),
+        pin_python_in_install_command: cli.python.is_some(),
         companions,
     };
     let mut report = match resolve(&environment, &loaded.snapshot, loaded.metadata, &options) {
@@ -552,6 +553,7 @@ async fn command_candidates(cli: &Cli, args: &CandidatesArgs) -> ExitCode {
         torch_version: args.torch_version.clone(),
         include_prerelease: args.prerelease,
         installer: Installer::Pip,
+        pin_python_in_install_command: cli.python.is_some(),
         companions,
     };
     let report = match resolve(&environment, &loaded.snapshot, loaded.metadata, &options) {

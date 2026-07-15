@@ -70,7 +70,7 @@ torch-check --python /opt/venv/bin/python recommend
 torch-check --gpu 0,2 recommend
 ```
 
-`--python` is used consistently for detection, verification, and generated installation commands. Commands are represented internally as an executable and argument vector; the displayed shell command is never executed by `torch-check`.
+By default, generated installation commands target the active shell or project environment, for example an activated venv or uv project. When `--python` is supplied, the same interpreter is used for detection, verification, and the generated installation command. Commands are represented internally as an executable and argument vector; the displayed shell command is never executed by `torch-check`.
 
 `--gpu` accepts physical indices from `nvidia-smi`, not CUDA-visible ordinals. During verification, `torch-check` selects devices by UUID and reports the physical-to-logical mapping used by the isolated Python process. A numeric `CUDA_VISIBLE_DEVICES` subset is rejected when that mapping cannot be established safely.
 
@@ -79,14 +79,27 @@ Human output adapts to the terminal width, groups identical selected GPUs, and u
 Current command forms are:
 
 ```bash
-/path/to/python -m pip install --isolated \
-  --index-url https://download.pytorch.org/whl/VARIANT torch==VERSION
+pip install torch==VERSION \
+  --index-url https://download.pytorch.org/whl/VARIANT
 
-uv pip install --python /path/to/python \
-  --default-index https://download.pytorch.org/whl/VARIANT torch==VERSION
+uv pip install torch==VERSION \
+  --default-index https://download.pytorch.org/whl/VARIANT
 
-uv add --python /path/to/python \
-  --index pytorch=https://download.pytorch.org/whl/VARIANT torch==VERSION
+uv add torch==VERSION \
+  --index pytorch=https://download.pytorch.org/whl/VARIANT
+```
+
+With `--python /path/to/python`, the corresponding pinned forms are emitted:
+
+```bash
+/path/to/python -m pip install --isolated torch==VERSION \
+  --index-url https://download.pytorch.org/whl/VARIANT
+
+uv pip install --python /path/to/python torch==VERSION \
+  --default-index https://download.pytorch.org/whl/VARIANT
+
+uv add --python /path/to/python torch==VERSION \
+  --index pytorch=https://download.pytorch.org/whl/VARIANT
 ```
 
 ## What the states mean

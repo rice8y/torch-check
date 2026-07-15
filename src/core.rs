@@ -919,11 +919,11 @@ pub struct CommandSpec {
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Installer {
-    /// `<python> -m pip install`.
+    /// `pip install`, or `<python> -m pip install` when Python is pinned.
     Pip,
-    /// `uv pip install --python <python>`.
+    /// `uv pip install`, optionally with `--python <python>`.
     Uv,
-    /// `uv add --index ...` for a project dependency.
+    /// `uv add --index ...` for a project dependency, optionally with `--python <python>`.
     UvAdd,
 }
 
