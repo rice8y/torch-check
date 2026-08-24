@@ -1984,6 +1984,11 @@ mod tests {
     fn official_default_cuda_variant_has_first_preference() {
         let rules = RuleSet::load().expect("rules");
         assert_eq!(
+            rules.official_preference("2.14.0", &"cu132".parse().expect("variant")),
+            Some(0)
+        );
+        assert!(rules.official_preference("2.14.0", &"cu130".parse().expect("variant")) > Some(0));
+        assert_eq!(
             rules.official_preference("2.13.0", &"cu130".parse().expect("variant")),
             Some(0)
         );

@@ -1,9 +1,12 @@
 {
   "schema_version": 3,
-  "reviewed_at": "2026-07-15",
+  "reviewed_at": "2026-08-24",
   "sources": [
     "https://github.com/pytorch/pytorch/blob/main/RELEASE.md",
+    "https://github.com/pytorch/pytorch/blob/release/2.14/.github/scripts/generate_binary_build_matrix.py",
+    "https://github.com/pytorch/pytorch/issues/190355",
     "https://pytorch.org/get-started/previous-versions/",
+    "https://github.com/pytorch/vision/blob/release/0.29/version.txt",
     "https://github.com/pytorch/pytorch/blob/v2.6.0/.ci/manywheel/build_cuda.sh",
     "https://github.com/pytorch/pytorch/blob/v2.7.0/.ci/manywheel/build_cuda.sh",
     "https://github.com/pytorch/pytorch/blob/v2.7.1/.ci/manywheel/build_cuda.sh",
@@ -14,6 +17,18 @@
     "https://github.com/pytorch/pytorch/blob/v2.11.0/.ci/manywheel/build_cuda.sh"
   ],
   "releases": [
+    {
+      "series": "2.14",
+      "preferred_variant": "cu132",
+      "variants": [
+        "cu126",
+        "cu130",
+        "cu132",
+        "cpu"
+      ],
+      "torchvision_minor": 29,
+      "torchaudio_series": null
+    },
     {
       "series": "2.13",
       "preferred_variant": "cu130",
@@ -180,6 +195,46 @@
     }
   ],
   "gpu_architectures": [
+    {
+      "series": "2.14",
+      "versions": [
+        "2.14.0"
+      ],
+      "variants": [
+        "cu126"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "5.0",
+        "6.0",
+        "7.0",
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0"
+      ],
+      "ptx_capability": null
+    },
+    {
+      "series": "2.14",
+      "versions": [
+        "2.14.0"
+      ],
+      "variants": [
+        "cu130",
+        "cu132"
+      ],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": [
+        "7.5",
+        "8.0",
+        "8.6",
+        "9.0",
+        "10.0",
+        "12.0"
+      ],
+      "ptx_capability": "12.0"
+    },
     {
       "series": "2.13",
       "versions": [
