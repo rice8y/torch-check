@@ -23,7 +23,7 @@ Usage:
   install.sh [OPTIONS]
 
 Options:
-  --version <VERSION>      Install a release such as 0.1.1 or v0.1.1
+  --version <VERSION>      Install a release such as 0.1.2 or v0.1.2
                            (default: latest)
   --install-dir <DIR>      Install into DIR (default: $HOME/.local/bin)
   -q, --quiet              Suppress informational output
