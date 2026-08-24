@@ -22,7 +22,7 @@ REQUIRED_TAGGED_CUDA_TAGS = {
     "2.10": ("v2.10.0",),
     "2.11": ("v2.11.0",),
 }
-MAIN_MATRIX_ARCHITECTURE_SERIES = {"2.12", "2.13"}
+MAIN_MATRIX_ARCHITECTURE_SERIES = {"2.12", "2.13", "2.14"}
 
 
 class ReviewError(RuntimeError):
