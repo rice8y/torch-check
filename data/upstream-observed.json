@@ -69,6 +69,18 @@
   ],
   "release_compatibility": [
     {
+      "series": "2.14",
+      "python": ">=3.10, <=(3.15, 3.15t experimental)",
+      "cxx_standard": "C++20",
+      "stable_cuda": [
+        "12.6",
+        "13.0",
+        "13.2"
+      ],
+      "experimental_cuda": [],
+      "stable_rocm": "7.14"
+    },
+    {
       "series": "2.13",
       "python": ">=3.10, <=(3.15, 3.15t experimental)",
       "cxx_standard": "C++20",
