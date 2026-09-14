@@ -297,7 +297,7 @@
       "notes": ""
     },
     {
-      "cuda": "13.0.2",
+      "cuda": "13.0.3",
       "compute_capabilities": [
         "7.5",
         "8.0",
