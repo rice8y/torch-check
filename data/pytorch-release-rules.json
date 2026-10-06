@@ -1,8 +1,9 @@
 {
   "schema_version": 3,
-  "reviewed_at": "2026-08-24",
+  "reviewed_at": "2026-10-06",
   "sources": [
     "https://github.com/pytorch/pytorch/blob/main/RELEASE.md",
+    "https://github.com/pytorch/pytorch/blob/release/2.15/.github/scripts/generate_binary_build_matrix.py",
     "https://github.com/pytorch/pytorch/blob/release/2.14/.github/scripts/generate_binary_build_matrix.py",
     "https://github.com/pytorch/pytorch/issues/190355",
     "https://pytorch.org/get-started/previous-versions/",
@@ -17,6 +18,17 @@
     "https://github.com/pytorch/pytorch/blob/v2.11.0/.ci/manywheel/build_cuda.sh"
   ],
   "releases": [
+    {
+      "series": "2.15",
+      "preferred_variant": "cu132",
+      "variants": [
+        "cu132",
+        "cu134",
+        "cpu"
+      ],
+      "torchvision_minor": null,
+      "torchaudio_series": null
+    },
     {
       "series": "2.14",
       "preferred_variant": "cu132",

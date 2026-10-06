@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[2]
+REVIEW_DATE = dt.date(2026, 10, 6)
 SCRIPT = ROOT / "scripts" / "check_reviewed_metadata.py"
 SPEC = importlib.util.spec_from_file_location("check_reviewed_metadata", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
@@ -55,7 +56,7 @@ class ReviewedMetadataTests(unittest.TestCase):
             load("cuda-driver-rules.json"),
             load("pytorch-release-rules.json"),
             load("upstream-observed.json"),
-            today=dt.date(2026, 8, 24),
+            today=REVIEW_DATE,
         )
 
     def test_detects_a_driver_rule_not_present_upstream(self) -> None:
@@ -66,7 +67,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 drivers,
                 load("pytorch-release-rules.json"),
                 load("upstream-observed.json"),
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_cuda_11_patch_version_is_compared_as_major_minor(self) -> None:
@@ -81,7 +82,7 @@ class ReviewedMetadataTests(unittest.TestCase):
             load("cuda-driver-rules.json"),
             load("pytorch-release-rules.json"),
             observed,
-            today=dt.date(2026, 8, 24),
+            today=REVIEW_DATE,
         )
 
     def test_detects_a_new_unreviewed_pytorch_release(self) -> None:
@@ -100,7 +101,24 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 load("pytorch-release-rules.json"),
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
+            )
+
+    def test_planned_release_does_not_reuse_an_older_architecture_table(self) -> None:
+        releases = copy.deepcopy(load("pytorch-release-rules.json"))
+        rule = copy.deepcopy(reviewed_rule(releases, "2.14", "cu132"))
+        rule["series"] = "2.15"
+        rule["versions"] = ["2.15.0"]
+        rule["variants"] = ["cu132"]
+        releases["gpu_architectures"].append(rule)
+        with self.assertRaisesRegex(
+            CHECKER.ReviewError, "PyTorch 2.15.0 cu132 has no observed architecture table"
+        ):
+            CHECKER.validate(
+                load("cuda-driver-rules.json"),
+                releases,
+                load("upstream-observed.json"),
+                today=REVIEW_DATE,
             )
 
     def test_accepts_series_specific_tagged_architecture_evidence(self) -> None:
@@ -115,7 +133,7 @@ class ReviewedMetadataTests(unittest.TestCase):
             load("cuda-driver-rules.json"),
             releases,
             observed,
-            today=dt.date(2026, 8, 24),
+            today=REVIEW_DATE,
         )
 
     def test_requires_every_official_tagged_architecture_rule(self) -> None:
@@ -134,7 +152,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 releases,
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_does_not_conflate_architectures_between_release_series(self) -> None:
@@ -152,7 +170,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 releases,
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_cu126_cannot_claim_sm120_from_cu128_evidence(self) -> None:
@@ -168,7 +186,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 releases,
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_tagged_series_does_not_fall_back_to_mutable_main_table(self) -> None:
@@ -198,7 +216,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 releases,
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_rejects_malformed_tagged_source_provenance(self) -> None:
@@ -209,7 +227,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 load("pytorch-release-rules.json"),
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_requires_the_exact_reviewed_tagged_build_set(self) -> None:
@@ -224,7 +242,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 load("pytorch-release-rules.json"),
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_requires_each_stable_patch_tag_to_match_the_reviewed_rule(self) -> None:
@@ -245,7 +263,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 load("pytorch-release-rules.json"),
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_future_patch_does_not_inherit_tagged_architecture_evidence(self) -> None:
@@ -259,7 +277,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 releases,
                 load("upstream-observed.json"),
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
     def test_requires_index_only_tagged_architecture_evidence_to_be_registered(self) -> None:
@@ -277,7 +295,7 @@ class ReviewedMetadataTests(unittest.TestCase):
                 load("cuda-driver-rules.json"),
                 releases,
                 observed,
-                today=dt.date(2026, 8, 24),
+                today=REVIEW_DATE,
             )
 
 
