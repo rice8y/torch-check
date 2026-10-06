@@ -1981,8 +1981,42 @@ mod tests {
     }
 
     #[test]
+    fn planned_release_does_not_inherit_architecture_or_companion_evidence() {
+        let rules = RuleSet::load().expect("rules");
+        let env = environment("590.0", "13.2");
+        for variant in ["cu132", "cu134"] {
+            assert_eq!(
+                evaluate_gpu_architecture(
+                    &env,
+                    "2.15.0",
+                    &variant.parse().expect("variant"),
+                    &rules,
+                )
+                .status,
+                CheckStatus::Unknown
+            );
+        }
+        for package in [CompanionPackage::Torchvision, CompanionPackage::Torchaudio] {
+            assert!(matches!(
+                companion_version(&rules, package, "2.15.0"),
+                Err(ResolverError::CompanionMappingMissing { .. })
+            ));
+        }
+    }
+
+    #[test]
     fn official_default_cuda_variant_has_first_preference() {
         let rules = RuleSet::load().expect("rules");
+        assert_eq!(
+            rules.official_preference("2.15.0", &"cu132".parse().expect("variant")),
+            Some(0)
+        );
+        assert!(rules.official_preference("2.15.0", &"cu134".parse().expect("variant")) > Some(0));
+        assert_eq!(
+            rules.official_preference("2.15.0", &"cu130".parse().expect("variant")),
+            None,
+            "a nightly-only build is not a reviewed release variant"
+        );
         assert_eq!(
             rules.official_preference("2.14.0", &"cu132".parse().expect("variant")),
             Some(0)
