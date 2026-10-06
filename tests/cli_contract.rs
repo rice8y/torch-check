@@ -37,7 +37,7 @@ fn human_parse_errors_keep_layout_and_escape_argument_controls() {
         .expect("run torch-check with an invalid argument");
 
     assert_eq!(output.status.code(), Some(2));
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout, Vec::<u8>::new());
     let stderr = String::from_utf8(output.stderr).expect("UTF-8 parse error");
     assert!(stderr.contains("found\n\nUsage: torch-check"), "{stderr}");
     assert!(!stderr.contains("found\\n\\nUsage:"), "{stderr}");
@@ -48,7 +48,7 @@ fn human_parse_errors_keep_layout_and_escape_argument_controls() {
         .output()
         .expect("run torch-check with a control character");
     assert_eq!(output.status.code(), Some(2));
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout, Vec::<u8>::new());
     let stderr = String::from_utf8(output.stderr).expect("UTF-8 parse error");
     assert!(stderr.contains("--bad\\nINJECT\\u{1b}[31m"), "{stderr}");
     assert!(!stderr.contains(hostile_argument), "{stderr}");
@@ -61,7 +61,7 @@ fn human_parse_errors_keep_layout_and_escape_argument_controls() {
         .output()
         .expect("run torch-check with an invalid control-bearing value");
     assert_eq!(output.status.code(), Some(2));
-    assert!(output.stdout.is_empty());
+    assert_eq!(output.stdout, Vec::<u8>::new());
     let stderr = String::from_utf8(output.stderr).expect("UTF-8 parse error");
     assert!(stderr.contains("cu12\\nSOURCE_INJECT"), "{stderr}");
     assert!(!stderr.contains(hostile_value), "{stderr}");
@@ -75,7 +75,7 @@ fn long_help_is_snapshotted() {
         .output()
         .expect("run torch-check help");
     assert!(output.status.success());
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, Vec::<u8>::new());
     let stdout = String::from_utf8(output.stdout).expect("UTF-8 help output");
     insta::assert_snapshot!(stdout);
 }
@@ -92,7 +92,7 @@ fn offline_mode_without_a_cache_returns_metadata_exit_code() {
         .expect("run offline recommendation");
 
     assert_eq!(output.status.code(), Some(3));
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, Vec::<u8>::new());
     let value: serde_json::Value =
         serde_json::from_slice(&output.stdout).expect("one JSON error document");
     assert_eq!(value["error"]["kind"], "metadata");

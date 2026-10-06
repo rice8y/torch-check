@@ -1,5 +1,6 @@
 //! Explicit, ignored smoke test against the official PyTorch wheel index.
 
+use torch_check::core::TorchWheel;
 use torch_check::index::{IndexOptions, load_index};
 
 #[tokio::test]
@@ -16,7 +17,7 @@ async fn official_torch_index_refresh_is_complete_and_nonempty() {
         .await
         .expect("official index refresh should succeed");
 
-    assert!(!loaded.snapshot.wheels.is_empty());
+    assert_ne!(loaded.snapshot.wheels, Vec::<TorchWheel>::new());
     assert!(
         loaded
             .snapshot

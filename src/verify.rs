@@ -1061,7 +1061,7 @@ mod tests {
 
         assert_eq!(report.status, CompatibilityStatus::Verified);
         assert_eq!(report.cuda_available, Some(false));
-        assert!(report.devices.is_empty());
+        assert_eq!(report.devices, Vec::<VerifiedDevice>::new());
         assert!(report.error.is_none());
         assert!(
             report
