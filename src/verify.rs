@@ -422,12 +422,18 @@ impl OutputBudget {
     }
 
     fn retain_count(&self, read_count: usize) -> usize {
-        let previous = self
-            .used
-            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |used| {
-                Some(used.saturating_add(read_count))
-            })
-            .unwrap_or(usize::MAX);
+        let mut previous = self.used.load(Ordering::Acquire);
+        loop {
+            match self.used.compare_exchange_weak(
+                previous,
+                previous.saturating_add(read_count),
+                Ordering::AcqRel,
+                Ordering::Acquire,
+            ) {
+                Ok(_) => break,
+                Err(actual) => previous = actual,
+            }
+        }
         let retain = read_count.min(self.max.saturating_sub(previous));
         if retain < read_count {
             self.exceeded.store(true, Ordering::Release);
