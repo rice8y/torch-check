@@ -18,3 +18,4 @@ python3 "$root/scripts/check_reviewed_metadata.py" \
   --drivers "$root/data/cuda-driver-rules.json" \
   --releases "$root/data/pytorch-release-rules.json" \
   --observed "$root/data/upstream-observed.json"
+python3 "$root/scripts/sync_readme_sources.py" --check

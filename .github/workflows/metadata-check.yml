@@ -24,13 +24,15 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -v
       - name: Observe official PyTorch and NVIDIA metadata
         run: python3 scripts/observe_upstream_metadata.py --output data/upstream-observed.json
+      - name: Synchronize README source catalog
+        run: python3 scripts/sync_readme_sources.py
       - name: Detect observation drift
         id: drift
         shell: bash
         run: |
-          if [[ -n "$(git status --porcelain -- data/upstream-observed.json)" ]]; then
+          if [[ -n "$(git status --porcelain -- data/upstream-observed.json README.md)" ]]; then
             echo 'changed=true' >> "$GITHUB_OUTPUT"
-            digest=$(sha256sum data/upstream-observed.json | cut -d ' ' -f 1)
+            digest=$(sha256sum data/upstream-observed.json README.md | sha256sum | cut -d ' ' -f 1)
             echo "branch=automation/upstream-metadata-${digest:0:12}" >> "$GITHUB_OUTPUT"
           else
             echo 'changed=false' >> "$GITHUB_OUTPUT"
@@ -46,7 +48,7 @@ jobs:
             echo "The content-addressed review branch already exists; leaving maintainer edits intact."
           else
             git switch --create "$BRANCH"
-            git add data/upstream-observed.json
+            git add data/upstream-observed.json README.md
             git commit --message 'chore: observe upstream compatibility metadata'
             git push origin "HEAD:refs/heads/$BRANCH"
           fi
@@ -62,7 +64,7 @@ jobs:
               --head "$BRANCH" \
               --base "$BASE_BRANCH" \
               --title 'chore: observe upstream compatibility metadata' \
-              --body 'This automated PR updates only the bounded observation of official PyTorch and NVIDIA compatibility metadata. It does not modify reviewed compatibility rules. A maintainer must compare this diff with the linked official sources and update data/cuda-driver-rules.json or data/pytorch-release-rules.json when needed. CI intentionally requires the reviewed rules to agree with this observation before merge.'
+              --body 'This automated PR updates the bounded observation of official PyTorch and NVIDIA compatibility metadata and synchronizes the README source catalog. Observed sources remain distinct from reviewed compatibility sources; this PR does not modify or approve compatibility rules. A maintainer must compare the diff with the linked official sources and update data/cuda-driver-rules.json or data/pytorch-release-rules.json when needed, then run python3 scripts/sync_readme_sources.py. CI requires both reviewed-rule agreement and a synchronized README before merge.'
           fi
 
   live-index:

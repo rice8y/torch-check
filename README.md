@@ -131,25 +131,49 @@ Snapshots are cached for 24 hours in the platform cache directory (normally `$XD
 - `--offline` performs no network request and requires an existing complete cache.
 - A stale cache may be used after a network failure, but the report identifies it as `stale_if_error` and warns about its age.
 
-CUDA driver rules and official release preferences are reviewed data files in [`data/`](data/). Their source URLs and review date are stored with the data. The scheduled bounded observer records PyTorch releases/architectures and NVIDIA driver tables in a content-addressed pull request. It never changes compatibility rules automatically; CI requires a human-reviewed rule update before a changed observation can be merged.
+CUDA driver rules and official release preferences are reviewed data files in [`data/`](data/). Their source URLs and review date are stored with the data. The scheduled bounded observer records PyTorch releases/architectures and NVIDIA driver tables and regenerates the README source catalog in the same content-addressed pull request. It never changes compatibility rules automatically; CI requires a human-reviewed rule update before a changed observation can be merged. After editing source metadata during review, run `python3 scripts/sync_readme_sources.py`; CI checks that the catalog stays synchronized.
 
-Static GPU architecture evidence is currently maintained for the PyTorch 2.6–2.14 releases listed in the reviewed data. PyTorch 2.6–2.11 coverage is reviewed against tag-pinned, content-hashed Linux wheel build scripts, including each exact stable patch tag recorded in the reviewed data. PyTorch 2.12–2.14 coverage is reviewed against the release matrix. The planned PyTorch 2.15 configuration is registered with stable CUDA 13.2 and experimental CUDA 13.4, but GPU architecture evidence and companion mappings remain unregistered until release-specific evidence is available; the 2.14 architecture table is not reused for 2.15. Registering a planned configuration does not invent wheel candidates: candidates must exist in the official index. Rules name exact public versions, so a new patch release never inherits older architecture evidence implicitly. Wheels from PyTorch 2.5 and earlier remain `unverified`: their tagged workflows select mutable external builder branches, so the exact builder checkout used for an artifact cannot be established from tag source alone.
+Static GPU architecture evidence is recorded for exact public versions and CUDA variants in [`data/pytorch-release-rules.json`](data/pytorch-release-rules.json). Evidence comes from tag-pinned, content-hashed Linux wheel build scripts or a reviewed release matrix; neither a newer patch nor a planned release inherits another version's evidence implicitly. A release configuration can be registered before its GPU architecture evidence or companion mappings are available. Registering a configuration does not invent wheel candidates: candidates must exist in the official index. Wheels from PyTorch 2.5 and earlier remain `unverified`: their tagged workflows select mutable external builder branches, so the exact builder checkout used for an artifact cannot be established from tag source alone.
 
-Primary sources:
+<!-- BEGIN GENERATED PRIMARY SOURCES -->
+Primary sources (generated from the metadata files; do not edit this block manually):
+
+Reviewed compatibility sources — latest registered PyTorch series: 2.15. A registered configuration is not proof of wheel availability or GPU architecture coverage; those are checked separately.
 
 - [NVIDIA CUDA minor-version compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)
-- [NVIDIA CUDA release driver table](https://docs.nvidia.com/cuda/archive/13.2.0/cuda-toolkit-release-notes/index.html#cuda-driver)
-- [PyTorch official wheel index](https://download.pytorch.org/whl/)
+- [NVIDIA CUDA 13.2.0 release driver table](https://docs.nvidia.com/cuda/archive/13.2.0/cuda-toolkit-release-notes/index.html#cuda-driver)
 - [PyTorch release matrix](https://github.com/pytorch/pytorch/blob/main/RELEASE.md)
 - [Previous PyTorch versions](https://pytorch.org/get-started/previous-versions/)
-- [PyTorch 2.6.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.6.0/.ci/manywheel/build_cuda.sh)
-- [PyTorch 2.7.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.7.0/.ci/manywheel/build_cuda.sh)
-- [PyTorch 2.7.1 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.7.1/.ci/manywheel/build_cuda.sh)
-- [PyTorch 2.8.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.8.0/.ci/manywheel/build_cuda.sh)
-- [PyTorch 2.9.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.9.0/.ci/manywheel/build_cuda.sh)
-- [PyTorch 2.9.1 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.9.1/.ci/manywheel/build_cuda.sh)
-- [PyTorch 2.10.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.10.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.15 release build matrix](https://github.com/pytorch/pytorch/blob/release/2.15/.github/scripts/generate_binary_build_matrix.py)
+- [PyTorch 2.14 release build matrix](https://github.com/pytorch/pytorch/blob/release/2.14/.github/scripts/generate_binary_build_matrix.py)
 - [PyTorch 2.11.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.11.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.10.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.10.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.9.1 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.9.1/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.9.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.9.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.8.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.8.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.7.1 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.7.1/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.7.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.7.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.6.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.6.0/.ci/manywheel/build_cuda.sh)
+- [TorchVision 0.29 version metadata](https://github.com/pytorch/vision/blob/release/0.29/version.txt)
+- [PyTorch issue #190355](https://github.com/pytorch/pytorch/issues/190355)
+
+Observed upstream sources — latest observed PyTorch series: 2.15. Observations are not automatically approved compatibility rules, including when a document also appears in the reviewed list.
+
+- [NVIDIA CUDA minor-version compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)
+- [NVIDIA CUDA 13.2.0 release driver table](https://docs.nvidia.com/cuda/archive/13.2.0/cuda-toolkit-release-notes/index.html#cuda-driver)
+- [PyTorch release matrix](https://github.com/pytorch/pytorch/blob/main/RELEASE.md#release-compatibility-matrix)
+- [PyTorch CUDA architecture matrix](https://github.com/pytorch/pytorch/blob/main/RELEASE.md#pytorch-cuda-support-matrix)
+- [PyTorch 2.11.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.11.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.10.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.10.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.9.1 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.9.1/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.9.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.9.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.8.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.8.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.7.1 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.7.1/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.7.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.7.0/.ci/manywheel/build_cuda.sh)
+- [PyTorch 2.6.0 Linux wheel build configuration](https://github.com/pytorch/pytorch/blob/v2.6.0/.ci/manywheel/build_cuda.sh)
+
+Wheel availability is queried separately from the [PyTorch official wheel index](https://download.pytorch.org/whl/).
+<!-- END GENERATED PRIMARY SOURCES -->
 
 ## JSON contract
 
@@ -187,6 +211,7 @@ shellcheck scripts/install.sh scripts/tests/test_install.sh
 scripts/tests/test_install.sh
 python3 -m unittest discover -s scripts/tests -v
 python3 scripts/check_reviewed_metadata.py
+python3 scripts/sync_readme_sources.py --check
 cargo package --locked
 ```
 

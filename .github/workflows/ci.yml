@@ -33,6 +33,7 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts/tests -v
           python3 scripts/check_reviewed_metadata.py
+          python3 scripts/sync_readme_sources.py --check
       - name: Test
         run: cargo test --workspace --all-features --locked
       - name: Documentation
