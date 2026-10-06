@@ -2281,7 +2281,7 @@ mod tests {
             .chain(&report.alternatives)
             .chain(&report.excluded)
             .collect::<Vec<_>>();
-        assert!(!candidates.is_empty());
+        assert_ne!(candidates, Vec::<&Candidate>::new());
         assert!(
             candidates
                 .iter()
