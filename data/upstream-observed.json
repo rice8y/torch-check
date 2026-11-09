@@ -295,21 +295,20 @@
   ],
   "linux_x86_64_and_windows_cuda_architectures": [
     {
-      "cuda": "12.6.3",
+      "cuda": "13.2.2",
       "compute_capabilities": [
-        "5.0",
-        "6.0",
-        "7.0",
         "7.5",
         "8.0",
         "8.6",
-        "9.0"
+        "9.0",
+        "10.0",
+        "12.0"
       ],
       "ptx_capabilities": [],
-      "notes": ""
+      "notes": "Release wheels ship SASS only; Linux nightlies also add +PTX for 12.0"
     },
     {
-      "cuda": "13.0.3",
+      "cuda": "13.4.1",
       "compute_capabilities": [
         "7.5",
         "8.0",
@@ -318,25 +317,8 @@
         "10.0",
         "12.0"
       ],
-      "ptx_capabilities": [
-        "12.0"
-      ],
-      "notes": "+PTX available on linux builds only"
-    },
-    {
-      "cuda": "13.2.1",
-      "compute_capabilities": [
-        "7.5",
-        "8.0",
-        "8.6",
-        "9.0",
-        "10.0",
-        "12.0"
-      ],
-      "ptx_capabilities": [
-        "12.0"
-      ],
-      "notes": "+PTX available on linux builds only"
+      "ptx_capabilities": [],
+      "notes": "Windows builds use CUDA 13.4.2. Release wheels ship SASS only; Linux nightlies also add +PTX for 12.0"
     }
   ],
   "pytorch_tagged_cuda_builds": [
