@@ -1,8 +1,11 @@
 {
   "schema_version": 3,
-  "reviewed_at": "2026-10-06",
+  "reviewed_at": "2026-11-19",
   "sources": [
     "https://github.com/pytorch/pytorch/blob/main/RELEASE.md",
+    "https://github.com/pytorch/pytorch/blob/v2.14.0/RELEASE.md#pytorch-cuda-support-matrix",
+    "https://github.com/pytorch/pytorch/blob/v2.15.0/RELEASE.md#pytorch-cuda-support-matrix",
+    "https://github.com/pytorch/pytorch/blob/efe07ed21d8969e4ddb161dab0976ec28d3f4d57/RELEASE.md#pytorch-cuda-support-matrix",
     "https://github.com/pytorch/pytorch/blob/release/2.15/.github/scripts/generate_binary_build_matrix.py",
     "https://github.com/pytorch/pytorch/blob/release/2.14/.github/scripts/generate_binary_build_matrix.py",
     "https://github.com/pytorch/pytorch/issues/190355",
@@ -207,6 +210,14 @@
     }
   ],
   "gpu_architectures": [
+    {
+      "series": "2.15",
+      "versions": ["2.15.0"],
+      "variants": ["cu132", "cu134"],
+      "platform": "linux_x86_64",
+      "cubin_capabilities": ["7.5", "8.0", "8.6", "9.0", "10.0", "12.0"],
+      "ptx_capability": null
+    },
     {
       "series": "2.14",
       "versions": [

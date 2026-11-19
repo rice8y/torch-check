@@ -22,7 +22,16 @@ REQUIRED_TAGGED_CUDA_TAGS = {
     "2.10": ("v2.10.0",),
     "2.11": ("v2.11.0",),
 }
-MAIN_MATRIX_ARCHITECTURE_SERIES = {"2.12", "2.13", "2.14"}
+# A release document can describe a series that shipped before its own tag.
+PINNED_CUDA_MATRICES = {
+    "v2.14.0": ("2.12.0", "2.12.1", "2.13.0"),
+    "v2.15.0": ("2.14.0",),
+    "efe07ed21d8969e4ddb161dab0976ec28d3f4d57": ("2.15.0",),
+}
+
+
+def pinned_cuda_matrix_url(ref: str) -> str:
+    return f"https://github.com/pytorch/pytorch/blob/{ref}/RELEASE.md#pytorch-cuda-support-matrix"
 
 
 class ReviewError(RuntimeError):
@@ -365,21 +374,25 @@ def validate(
             + "; ".join(details)
         )
 
-    observed_architectures = {
-        _variant(entry["cuda"]): entry
-        for entry in observed.get(
-            "linux_x86_64_and_windows_cuda_architectures", []
-        )
-    }
+    pinned_matrices = observed.get("pytorch_pinned_cuda_matrices", {})
+    architecture_by_version = {}
+    for ref, versions in PINNED_CUDA_MATRICES.items():
+        entries = pinned_matrices.get(ref)
+        if not entries or pinned_cuda_matrix_url(ref) not in releases["sources"]:
+            raise ReviewError(f"missing reviewed architecture evidence for PyTorch ref {ref}")
+        architectures = {_variant(entry["cuda"]): entry for entry in entries}
+        if len(architectures) != len(entries):
+            raise ReviewError(f"duplicate CUDA variants for PyTorch ref {ref}")
+        for version in versions:
+            architecture_by_version[version] = architectures
+
     for rule in reviewed_architecture_entries:
         for version in rule["versions"]:
             for variant in rule["variants"]:
                 if version in tagged_versions:
                     architecture = tagged_architectures.get((version, variant))
-                elif rule["series"] in MAIN_MATRIX_ARCHITECTURE_SERIES:
-                    architecture = observed_architectures.get(variant)
                 else:
-                    architecture = None
+                    architecture = architecture_by_version.get(version, {}).get(variant)
                 if architecture is None:
                     raise ReviewError(
                         f"PyTorch {version} {variant} has no observed architecture table"

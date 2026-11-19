@@ -76,6 +76,14 @@ def source_info(url: str) -> tuple[int, str, tuple[int, ...]]:
             return 3, "PyTorch CUDA architecture matrix", ()
         return 2, "PyTorch release matrix", ()
     match = re.fullmatch(
+        r"/pytorch/pytorch/blob/(v[0-9]+\.[0-9]+\.[0-9]+|[0-9a-f]{40})/RELEASE\.md",
+        path,
+    )
+    if match and parsed.fragment == "pytorch-cuda-support-matrix":
+        ref = match[1]
+        version = tuple(map(int, ref[1:].split("."))) if ref.startswith("v") else ()
+        return 3, f"PyTorch CUDA architecture matrix (ref {ref[:12]})", version
+    match = re.fullmatch(
         r"/pytorch/pytorch/blob/v([0-9.]+)/\.ci/manywheel/build_cuda\.sh", path
     )
     if match:
