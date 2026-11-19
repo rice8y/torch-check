@@ -215,7 +215,7 @@ python3 scripts/sync_readme_sources.py --check
 cargo package --locked
 ```
 
-Normal tests are fixture/mock based and do not require a GPU or network. The scheduled live-index check is separate so upstream drift cannot make pull-request tests nondeterministic.
+Normal tests are fixture/mock based and do not require a GPU or network. Pull-request CI validates the checked-in compatibility evidence. The scheduled live-index check and release validation also require a review within the past 90 days.
 
 ## License
 
