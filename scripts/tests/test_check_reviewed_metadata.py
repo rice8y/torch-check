@@ -137,15 +137,15 @@ class ReviewedMetadataTests(unittest.TestCase):
                 allow_stale=True,
             )
 
-    def test_planned_release_does_not_reuse_an_older_architecture_table(self) -> None:
+    def test_unreviewed_patch_does_not_reuse_a_pinned_architecture_table(self) -> None:
         releases = copy.deepcopy(load("pytorch-release-rules.json"))
         rule = copy.deepcopy(reviewed_rule(releases, "2.14", "cu132"))
         rule["series"] = "2.15"
-        rule["versions"] = ["2.15.0"]
+        rule["versions"] = ["2.15.1"]
         rule["variants"] = ["cu132"]
         releases["gpu_architectures"].append(rule)
         with self.assertRaisesRegex(
-            CHECKER.ReviewError, "PyTorch 2.15.0 cu132 has no observed architecture table"
+            CHECKER.ReviewError, "PyTorch 2.15.1 cu132 has no observed architecture table"
         ):
             CHECKER.validate(
                 load("cuda-driver-rules.json"),
@@ -154,6 +154,16 @@ class ReviewedMetadataTests(unittest.TestCase):
                 today=REVIEW_DATE,
                 allow_stale=True,
             )
+
+    def test_current_upstream_table_does_not_replace_pinned_release_evidence(self) -> None:
+        drivers = load("cuda-driver-rules.json")
+        releases = load("pytorch-release-rules.json")
+        observed = load("upstream-observed.json")
+        observed["linux_x86_64_and_windows_cuda_architectures"] = []
+        CHECKER.validate(drivers, releases, observed, today=REVIEW_DATE, allow_stale=True)
+        reviewed_rule(releases, "2.15", "cu132")["ptx_capability"] = "12.0"
+        with self.assertRaisesRegex(CHECKER.ReviewError, "PTX capability disagrees"):
+            CHECKER.validate(drivers, releases, observed, today=REVIEW_DATE, allow_stale=True)
 
     def test_accepts_series_specific_tagged_architecture_evidence(self) -> None:
         observed = load("upstream-observed.json")

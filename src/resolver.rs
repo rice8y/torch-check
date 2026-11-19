@@ -1981,19 +1981,26 @@ mod tests {
     }
 
     #[test]
-    fn planned_release_does_not_inherit_architecture_or_companion_evidence() {
+    fn pytorch_2_15_release_uses_native_architectures_without_nightly_ptx() {
         let rules = RuleSet::load().expect("rules");
-        let env = environment("590.0", "13.2");
+        let mut env = environment("595.45.04", "13.2");
         for variant in ["cu132", "cu134"] {
+            let variant = variant.parse().expect("variant");
+            env.nvidia.gpus[0].compute_capability = Some(ComputeCapability {
+                major: 12,
+                minor: 0,
+            });
             assert_eq!(
-                evaluate_gpu_architecture(
-                    &env,
-                    "2.15.0",
-                    &variant.parse().expect("variant"),
-                    &rules,
-                )
-                .status,
-                CheckStatus::Unknown
+                evaluate_gpu_architecture(&env, "2.15.0", &variant, &rules).status,
+                CheckStatus::Pass
+            );
+            env.nvidia.gpus[0].compute_capability = Some(ComputeCapability {
+                major: 13,
+                minor: 0,
+            });
+            assert_eq!(
+                evaluate_gpu_architecture(&env, "2.15.0", &variant, &rules).status,
+                CheckStatus::Fail
             );
         }
         for package in [CompanionPackage::Torchvision, CompanionPackage::Torchaudio] {

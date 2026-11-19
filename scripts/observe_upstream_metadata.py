@@ -804,6 +804,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    from check_reviewed_metadata import PINNED_CUDA_MATRICES, pinned_cuda_matrix_url
+
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
         snapshot = build_snapshot(
@@ -815,6 +817,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for series, tag in PYTORCH_CUDA_BUILD_TAGS
             ],
         )
+        pinned_matrices = {}
+        for ref in PINNED_CUDA_MATRICES:
+            document = read_source(
+                f"https://raw.githubusercontent.com/pytorch/pytorch/{ref}/RELEASE.md"
+            )
+            pinned_matrices[ref] = parse_cuda_architectures(document)
+            snapshot["sources"].append(
+                {"kind": "pinned_cuda_architecture_matrix", "url": pinned_cuda_matrix_url(ref)}
+            )
+        snapshot["pytorch_pinned_cuda_matrices"] = pinned_matrices
         write_atomic(args.output, serialized_snapshot(snapshot))
     except ObservationError as error:
         print(f"upstream metadata observation failed: {error}", file=sys.stderr)

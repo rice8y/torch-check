@@ -65,6 +65,18 @@
     {
       "kind": "nvidia_toolkit_driver_versions",
       "url": "https://docs.nvidia.com/cuda/archive/13.2.0/cuda-toolkit-release-notes/index.html#cuda-driver"
+    },
+    {
+      "kind": "pinned_cuda_architecture_matrix",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.14.0/RELEASE.md#pytorch-cuda-support-matrix"
+    },
+    {
+      "kind": "pinned_cuda_architecture_matrix",
+      "url": "https://github.com/pytorch/pytorch/blob/v2.15.0/RELEASE.md#pytorch-cuda-support-matrix"
+    },
+    {
+      "kind": "pinned_cuda_architecture_matrix",
+      "url": "https://github.com/pytorch/pytorch/blob/efe07ed21d8969e4ddb161dab0976ec28d3f4d57/RELEASE.md#pytorch-cuda-support-matrix"
     }
   ],
   "release_compatibility": [
@@ -1182,5 +1194,127 @@
       "linux_min_driver": "450.36.06",
       "windows_min_driver": "451.22"
     }
-  ]
+  ],
+  "pytorch_pinned_cuda_matrices": {
+    "v2.14.0": [
+      {
+        "cuda": "12.6.3",
+        "compute_capabilities": [
+          "5.0",
+          "6.0",
+          "7.0",
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0"
+        ],
+        "ptx_capabilities": [],
+        "notes": ""
+      },
+      {
+        "cuda": "13.0.2",
+        "compute_capabilities": [
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0",
+          "10.0",
+          "12.0"
+        ],
+        "ptx_capabilities": [
+          "12.0"
+        ],
+        "notes": "+PTX available on linux builds only"
+      },
+      {
+        "cuda": "13.2.1",
+        "compute_capabilities": [
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0",
+          "10.0",
+          "12.0"
+        ],
+        "ptx_capabilities": [
+          "12.0"
+        ],
+        "notes": "+PTX available on linux builds only"
+      }
+    ],
+    "v2.15.0": [
+      {
+        "cuda": "12.6.3",
+        "compute_capabilities": [
+          "5.0",
+          "6.0",
+          "7.0",
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0"
+        ],
+        "ptx_capabilities": [],
+        "notes": ""
+      },
+      {
+        "cuda": "13.0.3",
+        "compute_capabilities": [
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0",
+          "10.0",
+          "12.0"
+        ],
+        "ptx_capabilities": [
+          "12.0"
+        ],
+        "notes": "+PTX available on linux builds only"
+      },
+      {
+        "cuda": "13.2.1",
+        "compute_capabilities": [
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0",
+          "10.0",
+          "12.0"
+        ],
+        "ptx_capabilities": [
+          "12.0"
+        ],
+        "notes": "+PTX available on linux builds only"
+      }
+    ],
+    "efe07ed21d8969e4ddb161dab0976ec28d3f4d57": [
+      {
+        "cuda": "13.2.2",
+        "compute_capabilities": [
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0",
+          "10.0",
+          "12.0"
+        ],
+        "ptx_capabilities": [],
+        "notes": "Release wheels ship SASS only; Linux nightlies also add +PTX for 12.0"
+      },
+      {
+        "cuda": "13.4.3",
+        "compute_capabilities": [
+          "7.5",
+          "8.0",
+          "8.6",
+          "9.0",
+          "10.0",
+          "12.0"
+        ],
+        "ptx_capabilities": [],
+        "notes": "Release wheels ship SASS only; Linux nightlies also add +PTX for 12.0"
+      }
+    ]
+  }
 }
