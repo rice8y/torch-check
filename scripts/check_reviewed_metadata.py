@@ -57,13 +57,17 @@ def _series_key(series: str) -> tuple[int, int]:
     return int(components[0]), int(components[1])
 
 
-def _review_date(data: dict[str, Any], path: Path, today: dt.date) -> None:
+def _review_date(
+    data: dict[str, Any], path: Path, today: dt.date, *, allow_stale: bool
+) -> None:
     try:
         reviewed = dt.date.fromisoformat(data["reviewed_at"])
     except (KeyError, TypeError, ValueError) as error:
         raise ReviewError(f"{path} has no valid reviewed_at date") from error
     age = (today - reviewed).days
-    if age < 0 or age > MAX_REVIEW_AGE_DAYS:
+    if age < 0:
+        raise ReviewError(f"{path} reviewed_at date is in the future: {reviewed}")
+    if not allow_stale and age > MAX_REVIEW_AGE_DAYS:
         raise ReviewError(
             f"{path} review age is {age} days; expected 0-{MAX_REVIEW_AGE_DAYS}"
         )
@@ -209,6 +213,7 @@ def validate(
     today: dt.date,
     driver_path: Path = Path("data/cuda-driver-rules.json"),
     release_path: Path = Path("data/pytorch-release-rules.json"),
+    allow_stale: bool = False,
 ) -> None:
     """Raise ``ReviewError`` when reviewed data lacks observed support."""
 
@@ -219,8 +224,8 @@ def validate(
     if observed.get("authority") != "observation_only":
         raise ReviewError("upstream observation must be marked observation_only")
     tagged_architectures, tagged_versions = _tagged_cuda_architectures(observed)
-    _review_date(drivers, driver_path, today)
-    _review_date(releases, release_path, today)
+    _review_date(drivers, driver_path, today, allow_stale=allow_stale)
+    _review_date(releases, release_path, today, allow_stale=allow_stale)
 
     exact_driver_pairs = {
         (_major_minor(entry["toolkit_version"]), entry["linux_min_driver"])
@@ -414,6 +419,11 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser.add_argument(
         "--observed", type=Path, default=Path("data/upstream-observed.json")
     )
+    parser.add_argument(
+        "--allow-stale",
+        action="store_true",
+        help="validate compatibility evidence without enforcing its maximum review age",
+    )
     return parser.parse_args(argv)
 
 
@@ -427,6 +437,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             today=dt.date.today(),
             driver_path=args.drivers,
             release_path=args.releases,
+            allow_stale=args.allow_stale,
         )
     except (KeyError, TypeError, ValueError) as error:
         print(f"reviewed metadata check failed: malformed input: {error}", file=sys.stderr)

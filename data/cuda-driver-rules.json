@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at": "2026-07-14",
+  "reviewed_at": "2026-11-19",
   "sources": [
     "https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html",
     "https://docs.nvidia.com/cuda/archive/13.2.0/cuda-toolkit-release-notes/index.html#cuda-driver"
