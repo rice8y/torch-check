@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    groups:
+      cargo-patches:
+        patterns:
+          - "*"
+        update-types:
+          - patch
   - package-ecosystem: github-actions
     directory: /
     schedule:
